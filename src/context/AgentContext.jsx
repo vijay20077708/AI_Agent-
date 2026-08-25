@@ -181,7 +181,7 @@ export function AgentProvider({ children }) {
       // Intelligent Contextual Responses based on Domain & Memory Saving
       if (domain === 'hotel') {
         if (userLower.includes('check-in') || userLower.includes('time') || userLower.includes('check in')) {
-          replyText = `Standard check-in begins at 3:00 PM, and check-out is at 11:00 AM. If you require early check-in or luggage storage prior to arrival, I can arrange that for you right away!`;
+          replyText = `Standard check-in begins at 5:30 PM, and check-out is at 11:00 AM. If you require early check-in or luggage storage prior to arrival, I can arrange that for you right away!`;
         } else if (userLower.includes('book') || userLower.includes('suite') || userLower.includes('room') || userLower.includes('weekend')) {
           replyText = `I have checked our inventory: Our Deluxe King Suite with city view is available for this weekend at $240/night including complimentary breakfast. Shall I reserve this under your name?`;
           toolBadge = 'Hotel Booking Engine';
