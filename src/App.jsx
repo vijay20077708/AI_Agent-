@@ -1,5 +1,6 @@
 import React from 'react';
-import { AgentProvider, useAgent } from './context/AgentContext';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AgentProvider } from './context/AgentContext';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { HomeScreen } from './components/home/HomeScreen';
@@ -20,39 +21,6 @@ import { SavedView } from './components/ecosystem/SavedView';
 import './App.css';
 
 function MainAppShell() {
-  const { currentView } = useAgent();
-
-  const renderCurrentView = () => {
-    switch (currentView) {
-      case 'home':
-        return <HomeScreen />;
-      case 'agent-hub':
-        return <AgentHub />;
-      case 'create-agent':
-        return <CreateAgentForm />;
-      case 'choose-agent':
-        return <ChooseAgentScreen />;
-      case 'chat':
-        return <AIChatView />;
-      case 'code':
-        return <AICodeView />;
-      case 'image':
-        return <AIImageView />;
-      case 'video':
-        return <AIVideoView />;
-      case 'learn':
-        return <AILearnView />;
-      case 'tools':
-        return <MoreToolsView />;
-      case 'history':
-        return <HistoryView />;
-      case 'saved':
-        return <SavedView />;
-      default:
-        return <HomeScreen />;
-    }
-  };
-
   return (
     <div className="aurqo-root-layout">
       {/* Left Sidebar */}
@@ -62,7 +30,23 @@ function MainAppShell() {
       <div className="aurqo-main-view-wrapper">
         <Header />
         <main className="aurqo-main-stage">
-          {renderCurrentView()}
+          <Routes>
+            <Route path="/" element={<Navigate to="/agent-hub" replace />} />
+            <Route path="/agent-hub" element={<AgentHub />} />
+            <Route path="/create-agent" element={<CreateAgentForm />} />
+            <Route path="/choose-agent" element={<ChooseAgentScreen />} />
+            <Route path="/home" element={<HomeScreen />} />
+            <Route path="/chat" element={<AIChatView />} />
+            <Route path="/code" element={<AICodeView />} />
+            <Route path="/image" element={<AIImageView />} />
+            <Route path="/video" element={<AIVideoView />} />
+            <Route path="/learn" element={<AILearnView />} />
+            <Route path="/tools" element={<MoreToolsView />} />
+            <Route path="/history" element={<HistoryView />} />
+            <Route path="/saved" element={<SavedView />} />
+            {/* Fallback to agent-hub */}
+            <Route path="*" element={<Navigate to="/agent-hub" replace />} />
+          </Routes>
         </main>
       </div>
 
@@ -74,9 +58,11 @@ function MainAppShell() {
 
 function App() {
   return (
-    <AgentProvider>
-      <MainAppShell />
-    </AgentProvider>
+    <BrowserRouter>
+      <AgentProvider>
+        <MainAppShell />
+      </AgentProvider>
+    </BrowserRouter>
   );
 }
 

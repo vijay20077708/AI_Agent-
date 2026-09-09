@@ -26,7 +26,7 @@ export function AIChatView() {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      text: 'Hello! I am AURQO AI Core Chat. I can assist with reasoning, research, document summarization, and strategic planning. How can I help you today?',
+      text: 'வணக்கம்! I am THAMILI (தமிழி) AI Chat. I can assist with reasoning, research, document summarization, and strategic planning. How can I help you today?',
       model: 'GPT-4o'
     }
   ]);
@@ -86,7 +86,7 @@ export function AIChatView() {
         {messages.map((m, i) => (
           <div key={i} className={`eco-bubble ${m.role}`}>
             <div className="eco-bubble-meta">
-              <strong>{m.role === 'assistant' ? `AURQO (${m.model || model})` : 'You'}</strong>
+              <strong>{m.role === 'assistant' ? `THAMILI (${m.model || model})` : 'You'}</strong>
             </div>
             <p className="eco-bubble-text">{m.text}</p>
           </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAgent } from '../../context/AgentContext';
 import { DOMAINS } from '../../data/domains';
 import robotAvatarImg from '../../assets/robot-assistant.png';
+import { RobotSpeechDialog } from '../agent-preview/RobotSpeechDialog';
 import {
   X,
   Mic,
@@ -137,7 +138,8 @@ export function AgentSidePreview() {
 
   const domainObj = DOMAINS.find(d => d.id === agentConfig.domain) || DOMAINS[0];
   const lastMessage = messages[messages.length - 1];
-  const isAgentCurrentlyTalking = isSpeaking || isThinking;
+  const latestAgentMsg = [...messages].reverse().find(m => m.sender === 'agent');
+  const isCurrentlySpeakingLatest = activeSpeakingMsgId ? activeSpeakingMsgId === latestAgentMsg?.id : isSpeaking;
 
   return (
     <div className="centered-preview-overlay" onClick={closeSidePreview}>
@@ -146,7 +148,7 @@ export function AgentSidePreview() {
         <div className="centered-modal-header">
           <div className="flex items-center gap-3">
             <div className="side-avatar-circle" style={{ background: agentConfig.avatarBg || '#6366F1' }}>
-              <span>{agentConfig.avatar || '🏨'}</span>
+              <span>{agentConfig.avatar || '🤖'}</span>
             </div>
             <div>
               <h3 className="side-agent-name mb-0">{agentConfig.name}</h3>
@@ -179,7 +181,7 @@ export function AgentSidePreview() {
 
         {/* Studio Center Body: Left 3D Animated Robot + Right Conversation Stream */}
         <div className="centered-studio-body-grid">
-          {/* Left Column: 3D Animated Robot Stage */}
+          {/* Left Column: 3D Animated Robot Stage with Popping Speech Dialog */}
           <div className="robot-interactive-stage">
             {/* Robot Status Aura Pill */}
             <div className="robot-status-pill">
@@ -211,6 +213,17 @@ export function AgentSidePreview() {
                 {/* Holographic Glowing Stage Ring under Robot */}
                 <div className="robot-hologram-floor-disc" />
               </div>
+
+              {/* Dynamic Speech Dialogue Box Popping directly from the Robot! */}
+              <RobotSpeechDialog
+                agentName={agentConfig.name}
+                latestAgentMsg={latestAgentMsg}
+                isThinking={isThinking}
+                isSpeaking={isSpeaking}
+                isTextOnly={isTextOnly}
+                onReplayVoice={handleReplay}
+                isCurrentlySpeakingThis={isCurrentlySpeakingLatest}
+              />
 
               {/* Dynamic Equalizer Waves directly under robot */}
               {!isTextOnly && (
@@ -333,24 +346,32 @@ export function AgentSidePreview() {
               <div ref={chatScrollRef} />
             </div>
 
-            {/* Quick Domain Questions Chips */}
-            {((domainObj.discoveryQuestions && domainObj.discoveryQuestions.length > 0) || (domainObj.samplePrompts && domainObj.samplePrompts.length > 0)) && (
-              <div className="quick-suggestions-bar">
-                <span className="suggestions-label">Quick Inquiries:</span>
-                <div className="suggestions-chips-row">
-                  {(domainObj.samplePrompts || domainObj.discoveryQuestions).slice(0, 5).map((prompt, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => sendMessage(prompt)}
-                      className="suggestion-chip-button"
-                    >
-                      <span>{prompt}</span>
-                    </button>
-                  ))}
+            {/* Quick Inquiries & Questions Chips */}
+            {(() => {
+              const inquiries = (agentConfig.discoveryQuestions && agentConfig.discoveryQuestions.length > 0)
+                ? agentConfig.discoveryQuestions
+                : (domainObj.samplePrompts || domainObj.discoveryQuestions || []);
+
+              if (!inquiries || inquiries.length === 0) return null;
+
+              return (
+                <div className="quick-suggestions-bar">
+                  <span className="suggestions-label">Quick Inquiries:</span>
+                  <div className="suggestions-chips-row">
+                    {inquiries.slice(0, 6).map((prompt, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => sendMessage(prompt)}
+                        className="suggestion-chip-button"
+                      >
+                        <span>{prompt}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Bottom Action Controls (Text typing bar or Voice Only controls) */}
             {isVoiceOnly ? (

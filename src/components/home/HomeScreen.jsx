@@ -38,15 +38,15 @@ export function HomeScreen() {
       <div className="home-center-stage">
         {/* Big 3D Logo matching reference image */}
         <div className="home-hero-brand">
-          <AurqoLogo size={88} isHero={true} />
+          <AurqoLogo size={96} isHero={true} />
         </div>
 
         {/* Hero Headings */}
         <h1 className="home-hero-heading">
-          One AI. <span className="gradient-purple-text">Infinite Possibilities.</span>
+          தமிழி — <span className="gradient-purple-text">TAMIL-FIRST AI COMPANION</span>
         </h1>
         <p className="home-hero-subheading">
-          All the AI models and tools you need, in one simple place.
+          அனைத்து AI கருவிகளும் மற்றும் AI Agent-களும் ஒரே இடத்தில்!
         </p>
 
         {/* Central Search Bar from screenshot */}

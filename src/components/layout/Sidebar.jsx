@@ -1,129 +1,415 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAgent } from '../../context/AgentContext';
-import { AurqoLogo } from '../brand/AurqoLogo';
+import { ThamiliLogo } from '../brand/ThamiliLogo';
 import {
-  Home,
-  MessageSquare,
-  Code2,
-  Image,
-  Video,
-  GraduationCap,
   Bot,
-  Layers,
+  ChevronDown,
   History,
-  Bookmark,
+  User,
+  LogOut,
   Sparkles,
-  ChevronDown
+  CheckCircle2,
+  Clock,
+  Plus,
+  X,
+  ShieldCheck,
+  Zap,
+  ArrowRight
 } from 'lucide-react';
 
 export function Sidebar() {
-  const { currentView, setCurrentView } = useAgent();
+  const {
+    currentView,
+    setCurrentView,
+    agentHistory,
+    userProfile
+  } = useAgent();
 
-  const mainNav = [
-    { id: 'home', label: 'Home', icon: Home },
-    { id: 'chat', label: 'AI Chat', icon: MessageSquare },
-    { id: 'code', label: 'AI Code', icon: Code2 },
-    { id: 'image', label: 'AI Image', icon: Image },
-    { id: 'video', label: 'AI Video', icon: Video },
-    { id: 'learn', label: 'AI Learn', icon: GraduationCap },
-    { id: 'agent-hub', label: 'AI Agent', icon: Bot, isAgent: true },
-    { id: 'tools', label: 'More Tools', icon: Layers },
-  ];
+  const [isAgentMenuOpen, setIsAgentMenuOpen] = useState(true);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isProModalOpen, setIsProModalOpen] = useState(false);
+  const [logoutNotice, setLogoutNotice] = useState(false);
 
-  const secondaryNav = [
-    { id: 'history', label: 'History', icon: History },
-    { id: 'saved', label: 'Saved', icon: Bookmark },
-  ];
+  // 15-second Upgrade to Pro banner timer
+  const [showProBanner, setShowProBanner] = useState(true);
+  const [proSecondsLeft, setProSecondsLeft] = useState(15);
 
-  const handleNavClick = (navId) => {
-    if (navId === 'agent-hub') {
-      setCurrentView('agent-hub');
-    } else {
-      setCurrentView(navId);
-    }
-  };
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setProSecondsLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setShowProBanner(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const profileRef = useRef(null);
+
+  // Close profile dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const isAgentActive = ['agent-hub', 'create-agent', 'choose-agent'].includes(currentView);
 
+  const handleMainAgentClick = () => {
+    setCurrentView('agent-hub');
+    setIsAgentMenuOpen(prev => !prev);
+  };
+
+  const handleOpenHistory = () => {
+    setCurrentView('history');
+  };
+
+  const handleLogout = () => {
+    setIsProfileMenuOpen(false);
+    setLogoutNotice(true);
+    setTimeout(() => {
+      setLogoutNotice(false);
+    }, 3500);
+  };
+
   return (
-    <aside className="aurqo-sidebar">
-      {/* Top Logo */}
-      <div className="sidebar-brand-box" onClick={() => setCurrentView('home')}>
-        <AurqoLogo size={36} />
-      </div>
-
-      {/* Main Nav Items */}
-      <div className="sidebar-nav-container">
-        <nav className="sidebar-nav-group">
-          {mainNav.map((item) => {
-            const Icon = item.icon;
-            const isActive = item.isAgent ? isAgentActive : currentView === item.id;
-
-            return (
-              <button
-                key={item.id}
-                onClick={() => handleNavClick(item.id)}
-                className={`sidebar-link ${isActive ? 'active' : ''}`}
-              >
-                <div className="flex items-center gap-3">
-                  <Icon size={18} className="link-icon" />
-                  <span className="link-text">{item.label}</span>
-                </div>
-                {item.isAgent && (
-                  <span className="sidebar-pill-tag">New</span>
-                )}
-              </button>
-            );
-          })}
-        </nav>
-
-        <div className="sidebar-divider" />
-
-        {/* Secondary Nav */}
-        <nav className="sidebar-nav-group">
-          {secondaryNav.map((item) => {
-            const Icon = item.icon;
-            const isActive = currentView === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setCurrentView(item.id)}
-                className={`sidebar-link secondary ${isActive ? 'active' : ''}`}
-              >
-                <div className="flex items-center gap-3">
-                  <Icon size={18} className="link-icon" />
-                  <span className="link-text">{item.label}</span>
-                </div>
-              </button>
-            );
-          })}
-        </nav>
-      </div>
-
-      {/* Upgrade to Pro Card matching screenshot */}
-      <div className="sidebar-pro-banner">
-        <div className="pro-banner-header">
-          <span className="pro-title">Upgrade to Pro</span>
-          <Sparkles size={15} className="pro-sparkle" />
+    <>
+      <aside className="aurqo-sidebar thamili-sidebar">
+        {/* Top Logo - Exact Thamili branding from Image 2 */}
+        <div className="sidebar-brand-box" onClick={() => setCurrentView('agent-hub')}>
+          <ThamiliLogo size={46} />
         </div>
-        <p className="pro-subtitle">
-          Unlock more power, more models, and more possibilities.
-        </p>
-        <button className="pro-upgrade-btn">
-          Upgrade Now
-        </button>
-      </div>
 
-      {/* User Profile Footer matching screenshot */}
-      <div className="sidebar-user-section">
-        <div className="user-profile-row">
-          <div className="user-avatar-tag">AR</div>
-          <div className="user-meta-details">
-            <span className="user-full-name">Arjun R.</span>
+        {/* Main Nav Items */}
+        <div className="sidebar-nav-container">
+          <nav className="sidebar-nav-group">
+            {/* AI Agent Main Menu Item */}
+            <div className="sidebar-accordion-item">
+              <button
+                onClick={handleMainAgentClick}
+                className={`sidebar-link ${isAgentActive ? 'active' : ''}`}
+                title="AI Agent Studio"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="sidebar-icon-wrap">
+                    <Bot size={18} className="link-icon" />
+                  </div>
+                  <span className="link-text font-semibold">AI Agent</span>
+                </div>
+
+                {/* Down Arrow replaces the old 'New' badge */}
+                <div
+                  className="sidebar-arrow-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsAgentMenuOpen(prev => !prev);
+                  }}
+                  title={isAgentMenuOpen ? 'Collapse Agent Menu' : 'Expand Agent Menu'}
+                >
+                  <ChevronDown
+                    size={16}
+                    className={`sidebar-dropdown-arrow transition-transform duration-200 ${
+                      isAgentMenuOpen ? 'rotate-180 text-blue-600' : 'text-gray-400'
+                    }`}
+                  />
+                </div>
+              </button>
+
+              {/* Collapsible Submenu with History */}
+              {isAgentMenuOpen && (
+                <div className="sidebar-submenu-box animate-fadeIn">
+                  {/* History Page Shortcut */}
+                  <button
+                    onClick={handleOpenHistory}
+                    className={`sidebar-sub-link ${currentView === 'history' ? 'active-sub' : ''}`}
+                    title="View all launched agents and history details"
+                  >
+                    <div className="flex items-center gap-2">
+                      <History size={14} className="text-purple-600" />
+                      <span className="text-xs font-semibold">History</span>
+                    </div>
+                    {agentHistory && agentHistory.length > 0 && (
+                      <span className="sub-counter-badge">{agentHistory.length}</span>
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
+          </nav>
+        </div>
+
+        {/* Upgrade to Pro Tab (Visible for first 15 seconds on website open) */}
+        {showProBanner && (
+          <div className="sidebar-pro-tab-card animate-fadeIn">
+            <div className="sidebar-pro-tab-header">
+              <div className="flex items-center gap-1.5 font-bold text-xs text-blue-600 dark:text-blue-400">
+                <Sparkles size={14} className="text-amber-500 animate-pulse" />
+                <span>Thamili AI Pro</span>
+              </div>
+              <span className="sidebar-pro-tab-timer" title={`${proSecondsLeft}s remaining before moving to profile`}>
+                {proSecondsLeft}s
+              </span>
+            </div>
+            <p className="sidebar-pro-tab-desc">
+              Unlock all pro AI tools and models
+            </p>
+            <button
+              onClick={() => setIsProModalOpen(true)}
+              className="sidebar-pro-tab-btn"
+            >
+              <span>Explore Pro Tools</span>
+              <ArrowRight size={13} />
+            </button>
           </div>
-          <ChevronDown size={15} className="user-dropdown-caret" />
+        )}
+
+        {/* User Profile Footer with Dropdown */}
+        <div className="sidebar-user-section" ref={profileRef}>
+          {/* Profile Dropdown Popover */}
+          {isProfileMenuOpen && (
+            <div className="user-profile-popover animate-slideUp">
+              <div className="popover-header">
+                <div className="popover-avatar">{userProfile.avatar || 'VK'}</div>
+                <div className="popover-user-info">
+                  <h4 className="popover-name">{userProfile.name}</h4>
+                  <span className="popover-email">{userProfile.email}</span>
+                  <div className="flex items-center gap-1 mt-1">
+                    <span className="popover-plan-badge">
+                      <Zap size={10} />
+                      {userProfile.plan || 'Pro Plan'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pro Tools card inside profile */}
+              <div className="popover-pro-inner-card" onClick={() => setIsProModalOpen(true)}>
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-1.5 font-bold text-xs text-blue-600 dark:text-blue-400">
+                    <Sparkles size={13} className="text-amber-500" />
+                    <span>Thamili AI Pro</span>
+                  </div>
+                  <span className="text-[10px] bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-bold px-1.5 py-0.5 rounded-full">
+                    Pro
+                  </span>
+                </div>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-2 leading-tight">
+                  Unlock all pro AI tools and models
+                </p>
+                <button className="popover-pro-action-btn">
+                  <span>Explore Pro Tools</span>
+                  <ArrowRight size={12} />
+                </button>
+              </div>
+
+              <div className="popover-menu-divider" />
+
+              <div className="popover-actions">
+                <button
+                  onClick={() => {
+                    setIsProfileMenuOpen(false);
+                    setIsProfileModalOpen(true);
+                  }}
+                  className="popover-action-btn"
+                >
+                  <User size={15} className="action-icon text-blue-600" />
+                  <span>Profile Settings</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setIsProfileMenuOpen(false);
+                    setIsProModalOpen(true);
+                  }}
+                  className="popover-action-btn"
+                >
+                  <Sparkles size={15} className="action-icon text-amber-500" />
+                  <span>Upgrade & Pro Features</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setIsProfileMenuOpen(false);
+                    setCurrentView('history');
+                  }}
+                  className="popover-action-btn"
+                >
+                  <History size={15} className="action-icon text-purple-600" />
+                  <span>My Agent History</span>
+                </button>
+
+                <div className="popover-menu-divider" />
+
+                <button
+                  onClick={handleLogout}
+                  className="popover-action-btn logout-action"
+                >
+                  <LogOut size={15} className="action-icon text-rose-500" />
+                  <span>Logout</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Clickable Profile Trigger Row */}
+          <div
+            className={`user-profile-row ${isProfileMenuOpen ? 'profile-active' : ''}`}
+            onClick={() => setIsProfileMenuOpen(prev => !prev)}
+            title="Click to view profile & options"
+          >
+            <div className="user-avatar-tag">{userProfile.avatar || 'VK'}</div>
+            <div className="user-meta-details">
+              <span className="user-full-name">{userProfile.name}</span>
+              <span className="user-role-status">{userProfile.email}</span>
+            </div>
+            <ChevronDown
+              size={15}
+              className={`user-dropdown-caret transition-transform duration-200 ${
+                isProfileMenuOpen ? 'rotate-180 text-blue-600' : ''
+              }`}
+            />
+          </div>
         </div>
-      </div>
-    </aside>
+      </aside>
+
+      {/* Pro Features Modal */}
+      {isProModalOpen && (
+        <div className="modal-backdrop-overlay" onClick={() => setIsProModalOpen(false)}>
+          <div className="profile-modal-card animate-scaleIn" onClick={(e) => e.stopPropagation()}>
+            <div className="profile-modal-header">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 flex items-center justify-center font-bold">
+                  <Sparkles size={20} className="text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">Thamili AI Pro</h3>
+                  <p className="text-xs text-gray-500">Advanced AI Agent Architecture</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsProModalOpen(false)}
+                className="btn-modal-close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="profile-modal-body">
+              <div className="profile-detail-card space-y-3">
+                <div className="flex items-center justify-between py-1.5 border-b border-gray-100 dark:border-gray-800">
+                  <span className="text-xs text-gray-500">Autonomous Agents</span>
+                  <span className="text-xs font-semibold text-emerald-600">Unlimited Creation</span>
+                </div>
+                <div className="flex items-center justify-between py-1.5 border-b border-gray-100 dark:border-gray-800">
+                  <span className="text-xs text-gray-500">Voice Synthesis Engine</span>
+                  <span className="text-xs font-semibold text-blue-600">Real-Time WebRTC LiveKit</span>
+                </div>
+                <div className="flex items-center justify-between py-1.5 border-b border-gray-100 dark:border-gray-800">
+                  <span className="text-xs text-gray-500">Custom Knowledge Bases</span>
+                  <span className="text-xs font-semibold text-purple-600">PDF, Docs & Code RAG</span>
+                </div>
+                <div className="flex items-center justify-between py-1.5">
+                  <span className="text-xs text-gray-500">Active Account</span>
+                  <span className="text-xs font-bold text-gray-900 dark:text-gray-100">{userProfile.email}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="profile-modal-footer">
+              <button
+                onClick={() => setIsProModalOpen(false)}
+                className="btn-modal-done"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Profile Modal */}
+      {isProfileModalOpen && (
+        <div className="modal-backdrop-overlay" onClick={() => setIsProfileModalOpen(false)}>
+          <div className="profile-modal-card animate-scaleIn" onClick={(e) => e.stopPropagation()}>
+            <div className="profile-modal-header">
+              <div className="flex items-center gap-3">
+                <div className="modal-profile-avatar">{userProfile.avatar}</div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">{userProfile.name}</h3>
+                  <p className="text-xs text-gray-500">{userProfile.email}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsProfileModalOpen(false)}
+                className="btn-modal-close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="profile-modal-body">
+              <div className="profile-detail-card">
+                <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                  <span className="text-xs text-gray-500">Account Role</span>
+                  <span className="text-xs font-semibold text-gray-800 dark:text-gray-200">
+                    {userProfile.role}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                  <span className="text-xs text-gray-500">Membership Tier</span>
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full">
+                    <ShieldCheck size={12} />
+                    Verified Pro
+                  </span>
+                </div>
+                <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                  <span className="text-xs text-gray-500">Active Agents Launched</span>
+                  <span className="text-xs font-bold text-blue-600">
+                    {agentHistory.length} Agents
+                  </span>
+                </div>
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-xs text-gray-500">Language System</span>
+                  <span className="text-xs font-semibold text-blue-600">
+                    English (Default)
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="profile-modal-footer">
+              <button
+                onClick={() => setIsProfileModalOpen(false)}
+                className="btn-modal-done"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Logout Toast Notification */}
+      {logoutNotice && (
+        <div className="logout-toast-notification animate-bounceIn">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={16} className="text-emerald-500" />
+            <span>Session saved. Logged out of <strong>{userProfile.name}</strong></span>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

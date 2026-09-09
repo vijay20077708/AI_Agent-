@@ -12,28 +12,28 @@
   --gradient-brand-text: linear-gradient(135deg, #3B82F6 0%, #6C5CE7 50%, #EC4899 100%);
   --gradient-btn-primary: linear-gradient(135deg, #5850EC 0%, #7C3AED 100%);
 
-  /* Light Theme Variables (Default) */
-  --bg-page: #FBFBFE;
+  /* Light Theme Variables (Default - Optimized for 100% Readability & Contrast) */
+  --bg-page: #edf5ff;
   --bg-sidebar: #FFFFFF;
-  --bg-topbar: rgba(255, 255, 255, 0.85);
+  --bg-topbar: rgba(240, 247, 255, 0.88);
   --bg-card: #FFFFFF;
-  --bg-card-subtle: #F8FAFC;
-  --bg-card-hover: #F1F5F9;
+  --bg-card-subtle: #F1F5F9;
+  --bg-card-hover: #E2E8F0;
   --bg-input: #FFFFFF;
 
-  --text-main: #111827;
-  --text-sub: #6B7280;
-  --text-muted: #9CA3AF;
-  --text-purple: #5850EC;
+  --text-main: #0F172A;
+  --text-sub: #334155;
+  --text-muted: #64748B;
+  --text-purple: #4F46E5;
 
-  --border-light: #E5E7EB;
-  --border-focus: #6C5CE7;
-  --border-subtle: #F3F4F6;
+  --border-light: #E2E8F0;
+  --border-focus: #6366F1;
+  --border-subtle: #F1F5F9;
 
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
-  --shadow-card: 0 4px 20px -2px rgba(108, 92, 231, 0.06), 0 2px 6px -1px rgba(0, 0, 0, 0.02);
-  --shadow-search: 0 10px 40px -10px rgba(108, 92, 231, 0.12);
-  --shadow-glow: 0 0 30px rgba(108, 92, 231, 0.35);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow-card: 0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+  --shadow-search: 0 10px 35px -5px rgba(99, 102, 241, 0.12), 0 4px 12px -2px rgba(0, 0, 0, 0.05);
+  --shadow-glow: 0 0 30px rgba(99, 102, 241, 0.25);
 
   --radius-sm: 8px;
   --radius-md: 12px;

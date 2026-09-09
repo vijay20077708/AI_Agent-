@@ -3,29 +3,20 @@ import { useAgent } from '../../context/AgentContext';
 import { DEFAULT_AGENTS } from '../../data/defaultAgents';
 import {
   ArrowLeft,
-  Hotel,
-  Plane,
-  GraduationCap,
-  Code2,
-  Stethoscope,
-  TrendingUp,
   Sparkles,
   ArrowRight,
   BrainCircuit,
   Volume2,
   CheckCircle2,
-  Edit3
+  Edit3,
+  ChevronDown,
+  ChevronUp,
+  Check,
+  Plus,
+  Trash2,
+  HelpCircle
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-
-const ICON_MAP = {
-  hotel: Hotel,
-  travel: Plane,
-  study: GraduationCap,
-  code: Code2,
-  medical: Stethoscope,
-  finance: TrendingUp
-};
 
 export function ChooseAgentScreen() {
   const { launchDefaultAgent, setCurrentView } = useAgent();
@@ -42,6 +33,14 @@ export function ChooseAgentScreen() {
       return acc;
     }, {})
   );
+  const [agentQuestions, setAgentQuestions] = useState(
+    DEFAULT_AGENTS.reduce((acc, agent) => {
+      acc[agent.id] = [...(agent.discoveryQuestions || [])];
+      return acc;
+    }, {})
+  );
+  const [expandedQuestions, setExpandedQuestions] = useState({});
+  const [isEditingQuestions, setIsEditingQuestions] = useState({});
 
   const filteredAgents = DEFAULT_AGENTS.filter(
     agent => selectedDomainFilter === 'all' || agent.domain === selectedDomainFilter
@@ -55,7 +54,11 @@ export function ChooseAgentScreen() {
       colors: ['#3B82F6', '#8B5CF6', '#10B981', '#EC4899']
     });
     const chosenMode = agentModes[agent.id] || 'both';
-    launchDefaultAgent(agent, agentNames[agent.id], chosenMode);
+    const currentQuestions = agentQuestions[agent.id] || agent.discoveryQuestions;
+    launchDefaultAgent({
+      ...agent,
+      discoveryQuestions: currentQuestions
+    }, agentNames[agent.id], chosenMode);
   };
 
   const handleNameChange = (agentId, newName) => {
@@ -70,6 +73,57 @@ export function ChooseAgentScreen() {
       ...prev,
       [agentId]: mode
     }));
+  };
+
+  const toggleQuestionsDropdown = (agentId) => {
+    setExpandedQuestions(prev => ({
+      ...prev,
+      [agentId]: !prev[agentId]
+    }));
+  };
+
+  const toggleEditMode = (agentId, e) => {
+    e.stopPropagation();
+    setExpandedQuestions(prev => ({ ...prev, [agentId]: true }));
+    setIsEditingQuestions(prev => ({
+      ...prev,
+      [agentId]: !prev[agentId]
+    }));
+  };
+
+  const handleQuestionChange = (agentId, qIndex, newText) => {
+    setAgentQuestions(prev => {
+      const currentList = [...(prev[agentId] || [])];
+      currentList[qIndex] = newText;
+      return {
+        ...prev,
+        [agentId]: currentList
+      };
+    });
+  };
+
+  const handleAddQuestion = (agentId) => {
+    setAgentQuestions(prev => {
+      const currentList = [...(prev[agentId] || [])];
+      currentList.push('');
+      return {
+        ...prev,
+        [agentId]: currentList
+      };
+    });
+    setExpandedQuestions(prev => ({ ...prev, [agentId]: true }));
+    setIsEditingQuestions(prev => ({ ...prev, [agentId]: true }));
+  };
+
+  const handleDeleteQuestion = (agentId, qIndex) => {
+    setAgentQuestions(prev => {
+      const currentList = [...(prev[agentId] || [])];
+      currentList.splice(qIndex, 1);
+      return {
+        ...prev,
+        [agentId]: currentList
+      };
+    });
   };
 
   return (
@@ -122,8 +176,6 @@ export function ChooseAgentScreen() {
         {/* Pre-built Agents Grid */}
         <div className="prebuilt-agents-grid">
           {filteredAgents.map((agent) => {
-            const Icon = ICON_MAP[agent.domain] || Sparkles;
-
             return (
               <div key={agent.id} className={`prebuilt-agent-card ${agent.domain}-theme`}>
                 <div className="card-top-identity">
@@ -152,20 +204,109 @@ export function ChooseAgentScreen() {
                   />
                 </div>
 
-                {/* Preset Discovery Questions (Extended List!) */}
-                <div className="preset-questions-section">
-                  <div className="flex-between mb-2">
-                    <h5 className="preset-questions-heading mb-0">Pre-Configured Domain Questions:</h5>
-                    <span className="badge-count-questions">{agent.discoveryQuestions.length} Questions</span>
+                {/* Collapsible Questions Dropdown with Edit Option */}
+                <div className="preset-questions-accordion">
+                  <div
+                    className="questions-accordion-header"
+                    onClick={() => toggleQuestionsDropdown(agent.id)}
+                  >
+                    <div className="questions-header-left">
+                      <HelpCircle size={15} className="text-purple-600" />
+                      <span className="questions-header-title">Questions</span>
+                      <span className="badge-count-questions">
+                        {(agentQuestions[agent.id] || []).length}
+                      </span>
+                    </div>
+
+                    <div className="questions-header-right">
+                      <button
+                        type="button"
+                        className={`btn-toggle-edit-questions ${isEditingQuestions[agent.id] ? 'active' : ''}`}
+                        onClick={(e) => toggleEditMode(agent.id, e)}
+                        title={isEditingQuestions[agent.id] ? 'Save changes' : 'Edit questions'}
+                      >
+                        {isEditingQuestions[agent.id] ? (
+                          <>
+                            <Check size={12} />
+                            <span>Done</span>
+                          </>
+                        ) : (
+                          <>
+                            <Edit3 size={12} />
+                            <span>Edit</span>
+                          </>
+                        )}
+                      </button>
+
+                      <span className="questions-dropdown-chevron">
+                        {expandedQuestions[agent.id] ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      </span>
+                    </div>
                   </div>
-                  <ul className="preset-questions-list">
-                    {agent.discoveryQuestions.map((q, idx) => (
-                      <li key={idx} className="preset-question-item">
-                        <CheckCircle2 size={13} className="text-purple-500 flex-shrink-0 mt-0.5" />
-                        <span>{q}</span>
-                      </li>
-                    ))}
-                  </ul>
+
+                  {/* Expanded Content */}
+                  {expandedQuestions[agent.id] && (
+                    <div className="questions-accordion-body">
+                      {isEditingQuestions[agent.id] ? (
+                        /* Edit Mode */
+                        <div className="questions-edit-mode-list">
+                          {(agentQuestions[agent.id] || []).map((q, qIdx) => (
+                            <div key={qIdx} className="question-edit-row">
+                              <span className="question-num">{qIdx + 1}.</span>
+                              <input
+                                type="text"
+                                className="question-inline-input"
+                                value={q}
+                                onChange={(e) => handleQuestionChange(agent.id, qIdx, e.target.value)}
+                                placeholder="Enter question..."
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteQuestion(agent.id, qIdx)}
+                                className="btn-delete-question"
+                                title="Delete question"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          ))}
+
+                          <div className="questions-edit-actions">
+                            <button
+                              type="button"
+                              onClick={() => handleAddQuestion(agent.id)}
+                              className="btn-add-question"
+                            >
+                              <Plus size={13} />
+                              <span>Add Question</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => toggleEditMode(agent.id, e)}
+                              className="btn-save-questions"
+                            >
+                              <Check size={13} />
+                              <span>Done</span>
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        /* View Mode */
+                        <ul className="preset-questions-list">
+                          {(agentQuestions[agent.id] || []).length === 0 ? (
+                            <li className="no-questions-text">No questions configured. Click Edit to add questions.</li>
+                          ) : (
+                            (agentQuestions[agent.id] || []).map((q, idx) => (
+                              <li key={idx} className="preset-question-item">
+                                <CheckCircle2 size={13} className="text-purple-500 flex-shrink-0 mt-0.5" />
+                                <span>{q}</span>
+                              </li>
+                            ))
+                          )}
+                        </ul>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Interaction Mode Selector for Pre-built Agent */}
@@ -215,7 +356,7 @@ export function ChooseAgentScreen() {
                 <button
                   type="button"
                   onClick={() => handleLaunch(agent)}
-                  className="btn-launch-prebuilt"
+                  className={`btn-launch-prebuilt ${agent.domain}-launch-btn`}
                 >
                   <span>Launch {agentNames[agent.id] || agent.name}</span>
                   <ArrowRight size={16} />
