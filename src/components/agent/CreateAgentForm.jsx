@@ -28,8 +28,7 @@ import {
   Stethoscope,
   BookOpenCheck,
   TrendingUp,
-  SlidersHorizontal,
-  Eye,
+  Lock,
   CheckCircle2
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -58,8 +57,14 @@ export function CreateAgentForm() {
 
   // Active step: 1: Identity & Domain | 2: Voice & Interaction | 3: Tools & Knowledge
   const [activeStep, setActiveStep] = useState(1);
-  // View mode: 'stepped' (focus on one step) | 'all' (all 3 steps visible)
-  const [viewMode, setViewMode] = useState('stepped');
+  // Track completed steps explicitly so tick symbol ONLY appears after user completes a step
+  const [completedSteps, setCompletedSteps] = useState({
+    1: false,
+    2: false,
+    3: false
+  });
+  const [stepWarning, setStepWarning] = useState(null);
+  const [hasCustomName, setHasCustomName] = useState(false);
 
   const [isDragOver, setIsDragOver] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(null);
@@ -68,6 +73,15 @@ export function CreateAgentForm() {
   const currentDomainObj = DOMAINS.find((d) => d.id === agentConfig.domain) || DOMAINS[0];
   const currentVoiceObj = VOICE_PERSONAS.find((v) => v.id === (agentConfig.voiceId || 'shimmer')) || VOICE_PERSONAS[0];
   const activeToolsCount = Object.values(agentConfig.tools || {}).filter(Boolean).length;
+
+  // Validation checks
+  const isStep1Valid = Boolean(agentConfig.name?.trim() && agentConfig.role?.trim());
+  const isStep2Valid = Boolean(agentConfig.interactionMode && agentConfig.voiceId);
+
+  // Step 2 is unlocked ONLY if step 1 has been completed and remains valid
+  const isStep2Unlocked = Boolean(completedSteps[1] && isStep1Valid);
+  // Step 3 is unlocked ONLY if step 2 has been completed and step 1 is still valid
+  const isStep3Unlocked = Boolean(completedSteps[2] && isStep2Unlocked);
 
   // Handle Domain Selection without overwriting user-given Name and Role
   const handleDomainSelect = (domainId) => {
@@ -109,18 +123,77 @@ export function CreateAgentForm() {
     }
   };
 
+  // Stepper Header click handler
+  const handleStepClick = (targetStep) => {
+    if (targetStep === activeStep) return;
+
+    if (targetStep === 1) {
+      setActiveStep(1);
+      setStepWarning(null);
+    } else if (targetStep === 2) {
+      if (!isStep2Unlocked) {
+        setStepWarning('🔒 Please complete Step 1 (Agent Name & Role) first to unlock Step 2.');
+        setTimeout(() => setStepWarning(null), 3500);
+        return;
+      }
+      setActiveStep(2);
+      setStepWarning(null);
+    } else if (targetStep === 3) {
+      if (!isStep2Unlocked) {
+        setStepWarning('🔒 Please complete Step 1 first to unlock subsequent steps.');
+        setTimeout(() => setStepWarning(null), 3500);
+        return;
+      }
+      if (!isStep3Unlocked) {
+        setStepWarning('🔒 Please complete Step 2 (Voice & Interaction) first to unlock Step 3.');
+        setTimeout(() => setStepWarning(null), 3500);
+        return;
+      }
+      setActiveStep(3);
+      setStepWarning(null);
+    }
+  };
+
+  const handleCompleteStep1 = () => {
+    if (!agentConfig.name || !agentConfig.name.trim()) {
+      setStepWarning('⚠️ Please enter an Agent Name in Step 1.');
+      setTimeout(() => setStepWarning(null), 3500);
+      return;
+    }
+    if (!agentConfig.role || !agentConfig.role.trim()) {
+      setStepWarning('⚠️ Please enter an Agent Role / Purpose in Step 1.');
+      setTimeout(() => setStepWarning(null), 3500);
+      return;
+    }
+    setCompletedSteps((prev) => ({ ...prev, 1: true }));
+    setActiveStep(2);
+    setStepWarning(null);
+  };
+
+  const handleCompleteStep2 = () => {
+    if (!agentConfig.interactionMode || !agentConfig.voiceId) {
+      setStepWarning('⚠️ Please choose an Interaction Mode and Voice Persona.');
+      setTimeout(() => setStepWarning(null), 3500);
+      return;
+    }
+    setCompletedSteps((prev) => ({ ...prev, 2: true }));
+    setActiveStep(3);
+    setStepWarning(null);
+  };
+
   const handleSubmit = (e) => {
     if (e) e.preventDefault();
     if (!agentConfig.name || !agentConfig.name.trim()) {
       setActiveStep(1);
-      alert('Please enter an Agent Name in Step 1.');
+      setStepWarning('Please enter an Agent Name in Step 1.');
       return;
     }
     if (!agentConfig.role || !agentConfig.role.trim()) {
       setActiveStep(1);
-      alert('Please enter an Agent Role / Purpose in Step 1.');
+      setStepWarning('Please enter an Agent Role / Purpose in Step 1.');
       return;
     }
+    setCompletedSteps({ 1: true, 2: true, 3: true });
     confetti({
       particleCount: 85,
       spread: 75,
@@ -152,14 +225,10 @@ export function CreateAgentForm() {
     });
   };
 
-  const isStep1Complete = Boolean(agentConfig.name?.trim() && agentConfig.role?.trim());
-  const isStep2Complete = Boolean(agentConfig.interactionMode && agentConfig.voiceId);
-  const isStep3Complete = true; // optional tools/files
-
   return (
     <div className="create-agent-studio-view">
       <div className="create-agent-studio-container">
-        {/* Top Header Navigation */}
+        {/* Top Header Navigation: Clean with only Back & AI Agent Studio badge */}
         <div className="studio-top-nav">
           <button
             type="button"
@@ -171,28 +240,6 @@ export function CreateAgentForm() {
           </button>
 
           <div className="studio-top-actions">
-            {/* View Mode Switcher: Stepped vs All */}
-            <div className="studio-view-toggle">
-              <button
-                type="button"
-                onClick={() => setViewMode('stepped')}
-                className={`view-toggle-btn ${viewMode === 'stepped' ? 'active' : ''}`}
-                title="Step-by-Step Focus Mode"
-              >
-                <SlidersHorizontal size={13} />
-                <span>Stepped Studio</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('all')}
-                className={`view-toggle-btn ${viewMode === 'all' ? 'active' : ''}`}
-                title="View All Sections on One Page"
-              >
-                <Eye size={13} />
-                <span>All Sections</span>
-              </button>
-            </div>
-
             <div className="badge-creation-mode">
               <Sparkles size={13} className="text-purple-600" />
               <span>AI Agent Studio</span>
@@ -209,69 +256,88 @@ export function CreateAgentForm() {
             </p>
           </div>
 
-          {/* Stepper Navigation Pills */}
+          {/* Stepper Navigation Pills with Strict Step-Locking */}
           <div className="studio-stepper-bar">
+            {/* Step 1 Tab */}
             <button
               type="button"
-              className={`studio-step-tab ${activeStep === 1 ? 'active' : ''} ${isStep1Complete ? 'completed' : ''}`}
-              onClick={() => {
-                setActiveStep(1);
-                if (viewMode === 'all') {
-                  document.getElementById('studio-section-identity')?.scrollIntoView({ behavior: 'smooth' });
-                }
-              }}
+              className={`studio-step-tab ${activeStep === 1 ? 'active' : ''} ${completedSteps[1] && isStep1Valid ? 'completed' : ''}`}
+              onClick={() => handleStepClick(1)}
             >
               <div className="step-tab-number">
-                {isStep1Complete ? <Check size={12} strokeWidth={3} /> : '1'}
+                {completedSteps[1] && isStep1Valid ? (
+                  <Check size={12} strokeWidth={3} />
+                ) : (
+                  '1'
+                )}
               </div>
               <div className="step-tab-text">
-                <span className="step-label">Step 1</span>
+                <span className="step-label">
+                  Step 1 {completedSteps[1] && isStep1Valid ? '• Done ✓' : activeStep === 1 ? '• In Progress' : ''}
+                </span>
                 <span className="step-name">Identity & Domain</span>
               </div>
             </button>
 
-            <div className="step-divider-line" />
+            <div className={`step-divider-line ${isStep2Unlocked ? 'unlocked' : 'locked'}`} />
 
+            {/* Step 2 Tab */}
             <button
               type="button"
-              className={`studio-step-tab ${activeStep === 2 ? 'active' : ''} ${isStep2Complete ? 'completed' : ''}`}
-              onClick={() => {
-                setActiveStep(2);
-                if (viewMode === 'all') {
-                  document.getElementById('studio-section-voice')?.scrollIntoView({ behavior: 'smooth' });
-                }
-              }}
+              className={`studio-step-tab ${!isStep2Unlocked ? 'locked' : ''} ${activeStep === 2 ? 'active' : ''} ${completedSteps[2] && isStep2Unlocked ? 'completed' : ''}`}
+              onClick={() => handleStepClick(2)}
+              title={!isStep2Unlocked ? 'Locked: Finish Step 1 to unlock' : 'Step 2: Voice & Interaction'}
             >
               <div className="step-tab-number">
-                {isStep2Complete ? <Check size={12} strokeWidth={3} /> : '2'}
+                {!isStep2Unlocked ? (
+                  <Lock size={12} className="lock-icon" />
+                ) : completedSteps[2] ? (
+                  <Check size={12} strokeWidth={3} />
+                ) : (
+                  '2'
+                )}
               </div>
               <div className="step-tab-text">
-                <span className="step-label">Step 2</span>
+                <span className="step-label">
+                  Step 2 {!isStep2Unlocked ? '• 🔒 Locked' : completedSteps[2] ? '• Done ✓' : activeStep === 2 ? '• In Progress' : ''}
+                </span>
                 <span className="step-name">Voice & Interaction</span>
               </div>
             </button>
 
-            <div className="step-divider-line" />
+            <div className={`step-divider-line ${isStep3Unlocked ? 'unlocked' : 'locked'}`} />
 
+            {/* Step 3 Tab */}
             <button
               type="button"
-              className={`studio-step-tab ${activeStep === 3 ? 'active' : ''} ${isStep3Complete ? 'completed' : ''}`}
-              onClick={() => {
-                setActiveStep(3);
-                if (viewMode === 'all') {
-                  document.getElementById('studio-section-tools')?.scrollIntoView({ behavior: 'smooth' });
-                }
-              }}
+              className={`studio-step-tab ${!isStep3Unlocked ? 'locked' : ''} ${activeStep === 3 ? 'active' : ''} ${completedSteps[3] && isStep3Unlocked ? 'completed' : ''}`}
+              onClick={() => handleStepClick(3)}
+              title={!isStep3Unlocked ? 'Locked: Finish Step 2 to unlock' : 'Step 3: Tools & Knowledge'}
             >
               <div className="step-tab-number">
-                {isStep3Complete ? <Check size={12} strokeWidth={3} /> : '3'}
+                {!isStep3Unlocked ? (
+                  <Lock size={12} className="lock-icon" />
+                ) : completedSteps[3] ? (
+                  <Check size={12} strokeWidth={3} />
+                ) : (
+                  '3'
+                )}
               </div>
               <div className="step-tab-text">
-                <span className="step-label">Step 3</span>
+                <span className="step-label">
+                  Step 3 {!isStep3Unlocked ? '• 🔒 Locked' : completedSteps[3] ? '• Done ✓' : activeStep === 3 ? '• In Progress' : ''}
+                </span>
                 <span className="step-name">Tools & Knowledge</span>
               </div>
             </button>
           </div>
+
+          {/* Locked Step Warning Toast */}
+          {stepWarning && (
+            <div className="studio-step-warning-toast animate-fadeIn">
+              <span>{stepWarning}</span>
+            </div>
+          )}
         </div>
 
         {/* 2-Column Responsive Studio Layout */}
@@ -281,7 +347,7 @@ export function CreateAgentForm() {
             {/* ========================================================
                 SECTION 1: Identity & Domain Expertise
                ======================================================== */}
-            {(viewMode === 'all' || activeStep === 1) && (
+            {activeStep === 1 && (
               <div id="studio-section-identity" className="studio-section-card">
                 <div className="studio-section-header">
                   <div className="studio-icon-circle text-purple-600">
@@ -399,34 +465,26 @@ export function CreateAgentForm() {
                 </div>
 
                 {/* Stepper Navigation Actions */}
-                {viewMode === 'stepped' && (
-                  <div className="studio-step-footer">
-                    <div className="flex items-center gap-2 text-xs text-sub font-medium">
-                      <span>Step 1 of 3</span>
-                    </div>
-                    <button
-                      type="button"
-                      className="btn-studio-next"
-                      onClick={() => {
-                        if (!isStep1Complete) {
-                          alert('Please enter Agent Name and Role before proceeding.');
-                          return;
-                        }
-                        setActiveStep(2);
-                      }}
-                    >
-                      <span>Next: Voice & Interaction</span>
-                      <ArrowRight size={16} />
-                    </button>
+                <div className="studio-step-footer">
+                  <div className="flex items-center gap-2 text-xs text-sub font-medium">
+                    <span>Step 1 of 3</span>
                   </div>
-                )}
+                  <button
+                    type="button"
+                    className="btn-studio-next"
+                    onClick={handleCompleteStep1}
+                  >
+                    <span>Complete Step 1 & Next: Voice</span>
+                    <ArrowRight size={16} />
+                  </button>
+                </div>
               </div>
             )}
 
             {/* ========================================================
                 SECTION 2: Customer Interaction Mode & Voice Persona
                ======================================================== */}
-            {(viewMode === 'all' || activeStep === 2) && (
+            {activeStep === 2 && (
               <div id="studio-section-voice" className="studio-section-card">
                 <div className="studio-section-header">
                   <div className="studio-icon-circle text-blue-600">
@@ -575,33 +633,31 @@ export function CreateAgentForm() {
                 </div>
 
                 {/* Stepper Navigation Actions */}
-                {viewMode === 'stepped' && (
-                  <div className="studio-step-footer">
-                    <button
-                      type="button"
-                      className="btn-studio-back"
-                      onClick={() => setActiveStep(1)}
-                    >
-                      <ArrowLeft size={16} />
-                      <span>Back to Step 1</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-studio-next"
-                      onClick={() => setActiveStep(3)}
-                    >
-                      <span>Next: Tools & Knowledge</span>
-                      <ArrowRight size={16} />
-                    </button>
-                  </div>
-                )}
+                <div className="studio-step-footer">
+                  <button
+                    type="button"
+                    className="btn-studio-back"
+                    onClick={() => setActiveStep(1)}
+                  >
+                    <ArrowLeft size={16} />
+                    <span>Back to Step 1</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-studio-next"
+                    onClick={handleCompleteStep2}
+                  >
+                    <span>Complete Step 2 & Next: Tools</span>
+                    <ArrowRight size={16} />
+                  </button>
+                </div>
               </div>
             )}
 
             {/* ========================================================
                 SECTION 3: Tools, Knowledge Files & Memory
                ======================================================== */}
-            {(viewMode === 'all' || activeStep === 3) && (
+            {activeStep === 3 && (
               <div id="studio-section-tools" className="studio-section-card">
                 <div className="studio-section-header">
                   <div className="studio-icon-circle text-emerald-600">
@@ -780,19 +836,18 @@ export function CreateAgentForm() {
 
                 {/* Stepper Navigation Actions */}
                 <div className="studio-step-footer">
-                  {viewMode === 'stepped' && (
-                    <button
-                      type="button"
-                      className="btn-studio-back"
-                      onClick={() => setActiveStep(2)}
-                    >
-                      <ArrowLeft size={16} />
-                      <span>Back to Step 2</span>
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    className="btn-studio-back"
+                    onClick={() => setActiveStep(2)}
+                  >
+                    <ArrowLeft size={16} />
+                    <span>Back to Step 2</span>
+                  </button>
                   <button
                     type="submit"
                     className="btn-studio-launch"
+                    onClick={() => setCompletedSteps((prev) => ({ ...prev, 3: true }))}
                   >
                     <span>Create Agent & Open Side Preview</span>
                     <Sparkles size={16} />

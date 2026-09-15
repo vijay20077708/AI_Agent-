@@ -42,8 +42,35 @@ export function AgentSidePreview() {
   const [inputVal, setInputVal] = useState('');
   const [voiceTranscript, setVoiceTranscript] = useState('');
   const [activeSpeakingMsgId, setActiveSpeakingMsgId] = useState(null);
+  const [mouseTilt, setMouseTilt] = useState({ x: 0, y: 0 });
+  const [isReacting, setIsReacting] = useState(false);
   const chatScrollRef = useRef(null);
   const recognitionRef = useRef(null);
+  const robotStageRef = useRef(null);
+
+  // 3D Mouse Parallax Tilt Tracking
+  const handleStageMouseMove = (e) => {
+    if (!robotStageRef.current) return;
+    const rect = robotStageRef.current.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const offsetX = (e.clientX - centerX) / (rect.width / 2);
+    const offsetY = (e.clientY - centerY) / (rect.height / 2);
+
+    setMouseTilt({
+      x: Math.max(-12, Math.min(12, offsetY * -10)),
+      y: Math.max(-15, Math.min(15, offsetX * 14))
+    });
+  };
+
+  const handleStageMouseLeave = () => {
+    setMouseTilt({ x: 0, y: 0 });
+  };
+
+  const handleRobotClick = () => {
+    setIsReacting(true);
+    setTimeout(() => setIsReacting(false), 1400);
+  };
 
   const mode = agentConfig.interactionMode || 'both'; // 'both' | 'text-only' | 'voice-only'
   const isTextOnly = mode === 'text-only';
@@ -198,20 +225,44 @@ export function AgentSidePreview() {
             </div>
 
             {/* 3D Animated Robot Character Visual with Speaking Reactions */}
-            <div className="robot-character-wrapper">
-              <div className={`robot-avatar-container ${isSpeaking ? 'robot-talking' : isListening ? 'robot-listening' : 'robot-floating'}`}>
-                {/* Glowing Energy Aura Behind Robot */}
-                <div className={`robot-energy-halo ${isSpeaking ? 'active-glow' : ''}`} />
-                
-                {/* Cute 3D Robot Image (imported directly) */}
+            <div
+              className="robot-character-wrapper"
+              ref={robotStageRef}
+              onMouseMove={handleStageMouseMove}
+              onMouseLeave={handleStageMouseLeave}
+            >
+              <div
+                className={`robot-avatar-container ${
+                  isReacting
+                    ? 'robot-reacting'
+                    : isSpeaking
+                    ? 'robot-talking'
+                    : isListening
+                    ? 'robot-listening'
+                    : isThinking
+                    ? 'robot-thinking'
+                    : 'robot-floating'
+                }`}
+                style={{
+                  transform: `perspective(700px) rotateX(${mouseTilt.x}deg) rotateY(${mouseTilt.y}deg)`
+                }}
+                onClick={handleRobotClick}
+                title="Click me to interact! ✨"
+              >
+                {/* Soft Ambient Energy Aura Behind Robot */}
+                <div className={`robot-energy-halo ${isSpeaking ? 'active-glow' : ''} ${isThinking ? 'thinking-glow' : ''}`} />
+
+                {/* Cute 3D Robot Image */}
                 <img
                   src={robotAvatarImg}
                   alt="3D AI Robot Assistant"
                   className="animated-robot-img"
                 />
 
-                {/* Holographic Glowing Stage Ring under Robot */}
-                <div className="robot-hologram-floor-disc" />
+                {/* Soft Ground Shadow Platform */}
+                <div className="robot-holo-stage">
+                  <div className="holo-ground-shadow" />
+                </div>
               </div>
 
               {/* Dynamic Speech Dialogue Box Popping directly from the Robot! */}

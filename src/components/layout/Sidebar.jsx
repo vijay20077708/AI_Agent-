@@ -14,7 +14,8 @@ import {
   X,
   ShieldCheck,
   Zap,
-  ArrowRight
+  ArrowRight,
+  ChevronRight
 } from 'lucide-react';
 
 export function Sidebar() {
@@ -26,7 +27,6 @@ export function Sidebar() {
   } = useAgent();
 
   const [isAgentMenuOpen, setIsAgentMenuOpen] = useState(true);
-  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isProModalOpen, setIsProModalOpen] = useState(false);
   const [logoutNotice, setLogoutNotice] = useState(false);
@@ -50,22 +50,8 @@ export function Sidebar() {
     return () => clearInterval(timer);
   }, []);
 
-  const profileRef = useRef(null);
-
-  // Close profile dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (profileRef.current && !profileRef.current.contains(event.target)) {
-        setIsProfileMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
   const isAgentActive = ['agent-hub', 'create-agent', 'choose-agent'].includes(currentView);
+  const isProfileActive = currentView === 'profile';
 
   const handleMainAgentClick = () => {
     setCurrentView('agent-hub');
@@ -76,8 +62,11 @@ export function Sidebar() {
     setCurrentView('history');
   };
 
+  const handleProfileClick = () => {
+    setCurrentView('profile');
+  };
+
   const handleLogout = () => {
-    setIsProfileMenuOpen(false);
     setLogoutNotice(true);
     setTimeout(() => {
       setLogoutNotice(false);
@@ -175,109 +164,22 @@ export function Sidebar() {
           </div>
         )}
 
-        {/* User Profile Footer with Dropdown */}
-        <div className="sidebar-user-section" ref={profileRef}>
-          {/* Profile Dropdown Popover */}
-          {isProfileMenuOpen && (
-            <div className="user-profile-popover animate-slideUp">
-              <div className="popover-header">
-                <div className="popover-avatar">{userProfile.avatar || 'VK'}</div>
-                <div className="popover-user-info">
-                  <h4 className="popover-name">{userProfile.name}</h4>
-                  <span className="popover-email">{userProfile.email}</span>
-                  <div className="flex items-center gap-1 mt-1">
-                    <span className="popover-plan-badge">
-                      <Zap size={10} />
-                      {userProfile.plan || 'Pro Plan'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Pro Tools card inside profile */}
-              <div className="popover-pro-inner-card" onClick={() => setIsProModalOpen(true)}>
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-1.5 font-bold text-xs text-blue-600 dark:text-blue-400">
-                    <Sparkles size={13} className="text-amber-500" />
-                    <span>Thamili AI Pro</span>
-                  </div>
-                  <span className="text-[10px] bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-bold px-1.5 py-0.5 rounded-full">
-                    Pro
-                  </span>
-                </div>
-                <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-2 leading-tight">
-                  Unlock all pro AI tools and models
-                </p>
-                <button className="popover-pro-action-btn">
-                  <span>Explore Pro Tools</span>
-                  <ArrowRight size={12} />
-                </button>
-              </div>
-
-              <div className="popover-menu-divider" />
-
-              <div className="popover-actions">
-                <button
-                  onClick={() => {
-                    setIsProfileMenuOpen(false);
-                    setIsProfileModalOpen(true);
-                  }}
-                  className="popover-action-btn"
-                >
-                  <User size={15} className="action-icon text-blue-600" />
-                  <span>Profile Settings</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setIsProfileMenuOpen(false);
-                    setIsProModalOpen(true);
-                  }}
-                  className="popover-action-btn"
-                >
-                  <Sparkles size={15} className="action-icon text-amber-500" />
-                  <span>Upgrade & Pro Features</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setIsProfileMenuOpen(false);
-                    setCurrentView('history');
-                  }}
-                  className="popover-action-btn"
-                >
-                  <History size={15} className="action-icon text-purple-600" />
-                  <span>My Agent History</span>
-                </button>
-
-                <div className="popover-menu-divider" />
-
-                <button
-                  onClick={handleLogout}
-                  className="popover-action-btn logout-action"
-                >
-                  <LogOut size={15} className="action-icon text-rose-500" />
-                  <span>Logout</span>
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Clickable Profile Trigger Row */}
+        {/* User Profile Footer - Navigates to Dedicated User Details Page */}
+        <div className="sidebar-user-section">
           <div
-            className={`user-profile-row ${isProfileMenuOpen ? 'profile-active' : ''}`}
-            onClick={() => setIsProfileMenuOpen(prev => !prev)}
-            title="Click to view profile & options"
+            className={`user-profile-row ${isProfileActive ? 'profile-active' : ''}`}
+            onClick={handleProfileClick}
+            title="Click to view User Profile & Account Details"
           >
             <div className="user-avatar-tag">{userProfile.avatar || 'VK'}</div>
             <div className="user-meta-details">
               <span className="user-full-name">{userProfile.name}</span>
               <span className="user-role-status">{userProfile.email}</span>
             </div>
-            <ChevronDown
+            <ChevronRight
               size={15}
               className={`user-dropdown-caret transition-transform duration-200 ${
-                isProfileMenuOpen ? 'rotate-180 text-blue-600' : ''
+                isProfileActive ? 'text-blue-600 translate-x-0.5' : 'text-gray-400'
               }`}
             />
           </div>

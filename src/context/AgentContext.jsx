@@ -6,9 +6,24 @@ import { VOICE_PERSONAS } from '../data/voices';
 
 const PATH_TO_VIEW = {
   '/': 'agent-hub',
+  '/thamili': 'agent-hub',
+  '/thamili/agent-hub': 'agent-hub',
+  '/thamili/create-agent': 'create-agent',
+  '/thamili/choose-agent': 'choose-agent',
+  '/thamili/profile': 'profile',
+  '/thamili/home': 'home',
+  '/thamili/chat': 'chat',
+  '/thamili/code': 'code',
+  '/thamili/image': 'image',
+  '/thamili/video': 'video',
+  '/thamili/learn': 'learn',
+  '/thamili/tools': 'tools',
+  '/thamili/history': 'history',
+  '/thamili/saved': 'saved',
   '/agent-hub': 'agent-hub',
   '/create-agent': 'create-agent',
   '/choose-agent': 'choose-agent',
+  '/profile': 'profile',
   '/home': 'home',
   '/chat': 'chat',
   '/code': 'code',
@@ -21,18 +36,19 @@ const PATH_TO_VIEW = {
 };
 
 const VIEW_TO_PATH = {
-  'agent-hub': '/agent-hub',
-  'create-agent': '/create-agent',
-  'choose-agent': '/choose-agent',
-  'home': '/home',
-  'chat': '/chat',
-  'code': '/code',
-  'image': '/image',
-  'video': '/video',
-  'learn': '/learn',
-  'tools': '/tools',
-  'history': '/history',
-  'saved': '/saved'
+  'agent-hub': '/thamili/agent-hub',
+  'create-agent': '/thamili/create-agent',
+  'choose-agent': '/thamili/choose-agent',
+  'profile': '/thamili/profile',
+  'home': '/thamili/home',
+  'chat': '/thamili/chat',
+  'code': '/thamili/code',
+  'image': '/thamili/image',
+  'video': '/thamili/video',
+  'learn': '/thamili/learn',
+  'tools': '/thamili/tools',
+  'history': '/thamili/history',
+  'saved': '/thamili/saved'
 };
 
 const DEFAULT_INITIAL_AGENT_HISTORY = [
@@ -81,6 +97,24 @@ export function AgentProvider({ children }) {
     navigate(path);
   }, [navigate]);
 
+  // Dynamically update document tab title based on current view
+  useEffect(() => {
+    const titles = {
+      'agent-hub': 'தமிழி (THAMILI) — AI Agent Hub',
+      'create-agent': 'Create Agent — தமிழி (THAMILI)',
+      'choose-agent': 'Choose Agent — தமிழி (THAMILI)',
+      'profile': 'User Profile & Account — தமிழி (THAMILI)',
+      'history': 'Agent History — தமிழி (THAMILI)',
+      'tools': 'AI Tools — தமிழி (THAMILI)',
+      'chat': 'AI Chat — தமிழி (THAMILI)',
+      'code': 'AI Code — தமிழி (THAMILI)',
+      'image': 'AI Image — தமிழி (THAMILI)',
+      'video': 'AI Video — தமிழி (THAMILI)',
+      'learn': 'AI Learn — தமிழி (THAMILI)'
+    };
+    document.title = titles[currentView] || 'தமிழி (THAMILI) — Tamil-First AI Agent Platform';
+  }, [currentView]);
+
   const [theme, setTheme] = useState('light');
   const [isSidePreviewOpen, setIsSidePreviewOpen] = useState(false);
 
@@ -118,6 +152,13 @@ export function AgentProvider({ children }) {
       plan: 'Pro Plan'
     };
   });
+
+  // Persist userProfile to localStorage on update
+  useEffect(() => {
+    try {
+      localStorage.setItem('thamili_user_profile', JSON.stringify(userProfile));
+    } catch (e) {}
+  }, [userProfile]);
 
   // Default 3D Live Robot Assistant Configuration (Thamili Platform Guide)
   const DEFAULT_ROBOT_CONFIG = {
