@@ -5,16 +5,15 @@ import {
   ArrowLeft,
   Sparkles,
   ArrowRight,
-  BrainCircuit,
-  Volume2,
-  CheckCircle2,
-  Edit3,
   ChevronDown,
   ChevronUp,
   Check,
   Plus,
   Trash2,
-  HelpCircle
+  Edit3,
+  HelpCircle,
+  Copy,
+  Volume2
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -39,11 +38,14 @@ export function ChooseAgentScreen() {
       return acc;
     }, {})
   );
-  const [expandedQuestions, setExpandedQuestions] = useState({});
+  const [expandedQuestions, setExpandedQuestions] = useState({
+    'hotel-staff': true // Start with first agent open for instant discovery
+  });
   const [isEditingQuestions, setIsEditingQuestions] = useState({});
+  const [copiedQuestion, setCopiedQuestion] = useState(null);
 
   const filteredAgents = DEFAULT_AGENTS.filter(
-    agent => selectedDomainFilter === 'all' || agent.domain === selectedDomainFilter
+    (agent) => selectedDomainFilter === 'all' || agent.domain === selectedDomainFilter
   );
 
   const handleLaunch = (agent) => {
@@ -55,28 +57,32 @@ export function ChooseAgentScreen() {
     });
     const chosenMode = agentModes[agent.id] || 'both';
     const currentQuestions = agentQuestions[agent.id] || agent.discoveryQuestions;
-    launchDefaultAgent({
-      ...agent,
-      discoveryQuestions: currentQuestions
-    }, agentNames[agent.id], chosenMode);
+    launchDefaultAgent(
+      {
+        ...agent,
+        discoveryQuestions: currentQuestions
+      },
+      agentNames[agent.id],
+      chosenMode
+    );
   };
 
   const handleNameChange = (agentId, newName) => {
-    setAgentNames(prev => ({
+    setAgentNames((prev) => ({
       ...prev,
       [agentId]: newName
     }));
   };
 
   const handleModeChange = (agentId, mode) => {
-    setAgentModes(prev => ({
+    setAgentModes((prev) => ({
       ...prev,
       [agentId]: mode
     }));
   };
 
   const toggleQuestionsDropdown = (agentId) => {
-    setExpandedQuestions(prev => ({
+    setExpandedQuestions((prev) => ({
       ...prev,
       [agentId]: !prev[agentId]
     }));
@@ -84,15 +90,15 @@ export function ChooseAgentScreen() {
 
   const toggleEditMode = (agentId, e) => {
     e.stopPropagation();
-    setExpandedQuestions(prev => ({ ...prev, [agentId]: true }));
-    setIsEditingQuestions(prev => ({
+    setExpandedQuestions((prev) => ({ ...prev, [agentId]: true }));
+    setIsEditingQuestions((prev) => ({
       ...prev,
       [agentId]: !prev[agentId]
     }));
   };
 
   const handleQuestionChange = (agentId, qIndex, newText) => {
-    setAgentQuestions(prev => {
+    setAgentQuestions((prev) => {
       const currentList = [...(prev[agentId] || [])];
       currentList[qIndex] = newText;
       return {
@@ -103,7 +109,7 @@ export function ChooseAgentScreen() {
   };
 
   const handleAddQuestion = (agentId) => {
-    setAgentQuestions(prev => {
+    setAgentQuestions((prev) => {
       const currentList = [...(prev[agentId] || [])];
       currentList.push('');
       return {
@@ -111,12 +117,12 @@ export function ChooseAgentScreen() {
         [agentId]: currentList
       };
     });
-    setExpandedQuestions(prev => ({ ...prev, [agentId]: true }));
-    setIsEditingQuestions(prev => ({ ...prev, [agentId]: true }));
+    setExpandedQuestions((prev) => ({ ...prev, [agentId]: true }));
+    setIsEditingQuestions((prev) => ({ ...prev, [agentId]: true }));
   };
 
   const handleDeleteQuestion = (agentId, qIndex) => {
-    setAgentQuestions(prev => {
+    setAgentQuestions((prev) => {
       const currentList = [...(prev[agentId] || [])];
       currentList.splice(qIndex, 1);
       return {
@@ -124,6 +130,12 @@ export function ChooseAgentScreen() {
         [agentId]: currentList
       };
     });
+  };
+
+  const handleCopyQuestion = (text, idx) => {
+    navigator.clipboard?.writeText(text);
+    setCopiedQuestion(`${idx}-${text.slice(0, 10)}`);
+    setTimeout(() => setCopiedQuestion(null), 2000);
   };
 
   return (
@@ -140,20 +152,21 @@ export function ChooseAgentScreen() {
             <span>Back to Agent Options</span>
           </button>
           <div className="badge-choose-mode">
-            <Sparkles size={13} className="text-purple-600" />
-            <span>Pre-Built Automatic Domain Agents</span>
+            <Sparkles size={14} className="text-purple-600" />
+            <span>Domain Agents</span>
           </div>
         </div>
 
+        {/* Intro Header */}
         <div className="choose-intro-header">
-          <h2 className="choose-heading-title">Choose from Pre-Configured Domain Agents</h2>
+          <h1 className="choose-heading-title">Choose AI Agent</h1>
           <p className="choose-heading-sub">
-            Battle-tested domain agents pre-equipped with extensive domain questions, neural voice personas, and persistent memory. Customize any name and launch instantly into the <strong>Side Preview Tab</strong>.
+            Select a pre-configured domain agent and launch instantly.
           </p>
         </div>
 
-        {/* Domain Filter Pills */}
-        <div className="choose-filter-pills-row mb-6">
+        {/* Domain Filter Pills Row */}
+        <div className="choose-filter-pills-row">
           {[
             { id: 'all', label: 'All Pre-Built Agents' },
             { id: 'hotel', label: '🏨 Hospitality & Hotel' },
@@ -173,194 +186,270 @@ export function ChooseAgentScreen() {
           ))}
         </div>
 
-        {/* Pre-built Agents Grid */}
-        <div className="prebuilt-agents-grid">
-          {filteredAgents.map((agent) => {
+        {/* Stack of Horizontal Pre-Built Agent Cards */}
+        <div className="choose-agents-list-stack">
+          {filteredAgents.map((agent, index) => {
+            const indexNumber = String(index + 1).padStart(2, '0');
+            const isExpanded = Boolean(expandedQuestions[agent.id]);
+            const isEditing = Boolean(isEditingQuestions[agent.id]);
+            const currentQuestions = agentQuestions[agent.id] || agent.discoveryQuestions || [];
+            const currentMode = agentModes[agent.id] || 'both';
+
             return (
-              <div key={agent.id} className={`prebuilt-agent-card ${agent.domain}-theme`}>
-                <div className="card-top-identity">
-                  <div className="agent-avatar-circle" style={{ background: agent.avatarBg }}>
-                    <span className="text-2xl">{agent.avatar}</span>
+              <div
+                key={agent.id}
+                className={`choose-agent-card-item ${agent.domain}-theme-card ${isExpanded ? 'is-expanded' : ''}`}
+              >
+                {/* Main Horizontal Card Row */}
+                <div className="agent-card-main-row">
+                  {/* Left: Number + Avatar Badge */}
+                  <div className="agent-card-index-avatar-wrap">
+                    <div className="agent-card-index-box">
+                      <span className="agent-card-index-num">{indexNumber}</span>
+                      <span className="agent-card-avatar-emoji">{agent.avatar}</span>
+                    </div>
                   </div>
-                  <div>
-                    <span className="card-domain-badge">{agent.domain.toUpperCase()} AI AGENT</span>
-                    <h3 className="card-agent-title">{agent.name}</h3>
-                    <p className="card-agent-role">{agent.role}</p>
-                  </div>
-                </div>
 
-                {/* Editable Name Field */}
-                <div className="agent-name-edit-box">
-                  <label className="name-edit-label">
-                    <Edit3 size={13} />
-                    <span>Customize Agent Name:</span>
-                  </label>
-                  <input
-                    type="text"
-                    className="name-edit-input"
-                    value={agentNames[agent.id] || agent.name}
-                    onChange={(e) => handleNameChange(agent.id, e.target.value)}
-                    placeholder="Enter Custom Agent Name"
-                  />
-                </div>
-
-                {/* Collapsible Questions Dropdown with Edit Option */}
-                <div className="preset-questions-accordion">
-                  <div
-                    className="questions-accordion-header"
-                    onClick={() => toggleQuestionsDropdown(agent.id)}
-                  >
-                    <div className="questions-header-left">
-                      <HelpCircle size={15} className="text-purple-600" />
-                      <span className="questions-header-title">Questions</span>
-                      <span className="badge-count-questions">
-                        {(agentQuestions[agent.id] || []).length}
+                  {/* Middle: Agent Identity & Meta Badges */}
+                  <div className="agent-card-info-col">
+                    {/* Title + Domain Tag + Online Dot + Editable Agent Name */}
+                    <div className="agent-card-title-row">
+                      <div className="agent-name-input-box" title="Click to edit agent name">
+                        <input
+                          type="text"
+                          className="agent-card-name-input"
+                          value={agentNames[agent.id] ?? agent.name}
+                          onChange={(e) => handleNameChange(agent.id, e.target.value)}
+                          placeholder="Enter agent name..."
+                        />
+                        <Edit3 size={13} className="agent-name-pencil-icon" />
+                      </div>
+                      <span className={`agent-domain-pill ${agent.domain}`}>
+                        {agent.domain.toUpperCase()}
                       </span>
+                      <div className="agent-online-status-badge">
+                        <span className="online-green-dot" />
+                        <span>Online</span>
+                      </div>
                     </div>
 
-                    <div className="questions-header-right">
-                      <button
-                        type="button"
-                        className={`btn-toggle-edit-questions ${isEditingQuestions[agent.id] ? 'active' : ''}`}
-                        onClick={(e) => toggleEditMode(agent.id, e)}
-                        title={isEditingQuestions[agent.id] ? 'Save changes' : 'Edit questions'}
-                      >
-                        {isEditingQuestions[agent.id] ? (
-                          <>
-                            <Check size={12} />
-                            <span>Done</span>
-                          </>
-                        ) : (
-                          <>
-                            <Edit3 size={12} />
-                            <span>Edit</span>
-                          </>
+                    {/* Role Subtitle */}
+                    <p className="agent-card-role-desc">{agent.role}</p>
+
+                    {/* Metadata & Interactive Mode Selector Badges */}
+                    <div className="agent-card-meta-pills-row">
+                      {/* Mode Switcher Pills */}
+                      <div className="agent-card-mode-pills-group">
+                        <span className="meta-pill-label">Mode:</span>
+                        <button
+                          type="button"
+                          onClick={() => handleModeChange(agent.id, 'both')}
+                          className={`agent-mode-mini-pill ${currentMode === 'both' ? 'active' : ''}`}
+                          title="Voice & Text Hybrid Mode"
+                        >
+                          🎙️💬 Hybrid
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleModeChange(agent.id, 'text-only')}
+                          className={`agent-mode-mini-pill ${currentMode === 'text-only' ? 'active' : ''}`}
+                          title="Text Message Only"
+                        >
+                          💬 Text
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleModeChange(agent.id, 'voice-only')}
+                          className={`agent-mode-mini-pill ${currentMode === 'voice-only' ? 'active' : ''}`}
+                          title="Voice Only Phone Call"
+                        >
+                          🎙️ Voice
+                        </button>
+                      </div>
+
+                      {/* Voice Persona Pill */}
+                      <div className="agent-card-spec-pill">
+                        <Volume2 size={13} className="text-purple-600" />
+                        <span>Voice: {agent.voiceName || 'Shimmer (Female)'}</span>
+                      </div>
+
+                      {/* Prompts Count Pill */}
+                      <div className="agent-card-spec-pill">
+                        <HelpCircle size={13} className="text-blue-600" />
+                        <span>{currentQuestions.length} Prompts</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right: Action Buttons (Prompts Toggle & Launch) */}
+                  <div className="agent-card-actions-col">
+                    {/* Prompts Accordion Toggle Button */}
+                    <button
+                      type="button"
+                      onClick={() => toggleQuestionsDropdown(agent.id)}
+                      className={`btn-agent-prompts-toggle ${isExpanded ? 'active' : ''}`}
+                    >
+                      <span>Prompts</span>
+                      {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                    </button>
+
+                    {/* Primary Launch Button */}
+                    <button
+                      type="button"
+                      onClick={() => handleLaunch(agent)}
+                      className={`btn-agent-card-launch ${agent.domain}-launch-btn`}
+                    >
+                      <span>Launch</span>
+                      <ArrowRight size={15} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Expanded Discovery Questions Accordion Drawer */}
+                {isExpanded && (
+                  <div className="agent-card-expanded-drawer animate-fadeIn">
+                    {/* Drawer Header: Title & Edit Action */}
+                    <div className="drawer-header-bar">
+                      <div className="drawer-title-group">
+                        <Sparkles size={14} className="text-purple-600" />
+                        <span className="drawer-title-text">
+                          PRE-CONFIGURED INQUIRY & DISCOVERY QUESTIONS ({currentQuestions.length})
+                        </span>
+                      </div>
+
+                      <div className="drawer-actions-group">
+                        {isEditing && (
+                          <button
+                            type="button"
+                            onClick={() => handleAddQuestion(agent.id)}
+                            className="btn-drawer-add-q"
+                          >
+                            <Plus size={13} />
+                            <span>Add Question</span>
+                          </button>
                         )}
-                      </button>
 
-                      <span className="questions-dropdown-chevron">
-                        {expandedQuestions[agent.id] ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                      </span>
+                        <button
+                          type="button"
+                          onClick={(e) => toggleEditMode(agent.id, e)}
+                          className={`btn-drawer-edit-toggle ${isEditing ? 'editing' : ''}`}
+                        >
+                          {isEditing ? (
+                            <>
+                              <Check size={13} />
+                              <span>Done</span>
+                            </>
+                          ) : (
+                            <>
+                              <Edit3 size={13} />
+                              <span>Edit Questions</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Expanded Content */}
-                  {expandedQuestions[agent.id] && (
-                    <div className="questions-accordion-body">
-                      {isEditingQuestions[agent.id] ? (
+                    {/* Drawer Content Body: Grid of Questions or Edit Form */}
+                    <div className="drawer-content-body">
+                      {isEditing ? (
                         /* Edit Mode */
-                        <div className="questions-edit-mode-list">
-                          {(agentQuestions[agent.id] || []).map((q, qIdx) => (
-                            <div key={qIdx} className="question-edit-row">
-                              <span className="question-num">{qIdx + 1}.</span>
+                        <div className="drawer-edit-mode-list">
+                          <div className="drawer-agent-name-edit-box">
+                            <label className="drawer-name-field-label">
+                              <Edit3 size={12} className="text-purple-600" />
+                              <span>Custom Agent Name:</span>
+                            </label>
+                            <input
+                              type="text"
+                              className="drawer-agent-name-input"
+                              value={agentNames[agent.id] ?? agent.name}
+                              onChange={(e) => handleNameChange(agent.id, e.target.value)}
+                              placeholder="Enter custom agent name..."
+                            />
+                          </div>
+                          {currentQuestions.map((q, qIdx) => (
+                            <div key={qIdx} className="drawer-edit-row">
+                              <span className="drawer-edit-num">{String(qIdx + 1).padStart(2, '0')}.</span>
                               <input
                                 type="text"
-                                className="question-inline-input"
+                                className="drawer-edit-input"
                                 value={q}
                                 onChange={(e) => handleQuestionChange(agent.id, qIdx, e.target.value)}
-                                placeholder="Enter question..."
+                                placeholder="Enter discovery question..."
                               />
                               <button
                                 type="button"
                                 onClick={() => handleDeleteQuestion(agent.id, qIdx)}
-                                className="btn-delete-question"
-                                title="Delete question"
+                                className="btn-drawer-delete-q"
+                                title="Delete Question"
                               >
-                                <Trash2 size={13} />
+                                <Trash2 size={14} />
                               </button>
                             </div>
                           ))}
 
-                          <div className="questions-edit-actions">
+                          <div className="drawer-edit-footer">
                             <button
                               type="button"
                               onClick={() => handleAddQuestion(agent.id)}
-                              className="btn-add-question"
+                              className="btn-drawer-add-q-main"
                             >
-                              <Plus size={13} />
-                              <span>Add Question</span>
+                              <Plus size={14} />
+                              <span>Add New Question</span>
                             </button>
                             <button
                               type="button"
                               onClick={(e) => toggleEditMode(agent.id, e)}
-                              className="btn-save-questions"
+                              className="btn-drawer-done-main"
                             >
-                              <Check size={13} />
-                              <span>Done</span>
+                              <Check size={14} />
+                              <span>Save Questions</span>
                             </button>
                           </div>
                         </div>
                       ) : (
-                        /* View Mode */
-                        <ul className="preset-questions-list">
-                          {(agentQuestions[agent.id] || []).length === 0 ? (
-                            <li className="no-questions-text">No questions configured. Click Edit to add questions.</li>
+                        /* View Mode: Clean 2/3 Column Grid of Question Cards */
+                        <div className="drawer-questions-cards-grid">
+                          {currentQuestions.length === 0 ? (
+                            <div className="drawer-no-questions">
+                              No questions configured. Click "Edit Questions" to add.
+                            </div>
                           ) : (
-                            (agentQuestions[agent.id] || []).map((q, idx) => (
-                              <li key={idx} className="preset-question-item">
-                                <CheckCircle2 size={13} className="text-purple-500 flex-shrink-0 mt-0.5" />
-                                <span>{q}</span>
-                              </li>
-                            ))
+                            currentQuestions.map((question, qIdx) => {
+                              const qNum = String(qIdx + 1).padStart(2, '0');
+                              const isCopied = copiedQuestion === `${qIdx}-${question.slice(0, 10)}`;
+
+                              return (
+                                <div
+                                  key={qIdx}
+                                  className="drawer-question-card"
+                                  onClick={() => handleCopyQuestion(question, qIdx)}
+                                  title="Click to copy question"
+                                >
+                                  <div className="drawer-q-card-head">
+                                    <span className="drawer-q-num">{qNum}.</span>
+                                    <button
+                                      type="button"
+                                      className="btn-copy-q-icon"
+                                      title={isCopied ? 'Copied!' : 'Copy question'}
+                                    >
+                                      {isCopied ? (
+                                        <Check size={12} className="text-emerald-500" />
+                                      ) : (
+                                        <Copy size={12} />
+                                      )}
+                                    </button>
+                                  </div>
+                                  <p className="drawer-q-text">{question}</p>
+                                </div>
+                              );
+                            })
                           )}
-                        </ul>
+                        </div>
                       )}
                     </div>
-                  )}
-                </div>
-
-                {/* Interaction Mode Selector for Pre-built Agent */}
-                <div className="agent-mode-selector-row">
-                  <span className="agent-mode-label">Interaction Mode:</span>
-                  <div className="agent-mode-pills">
-                    <button
-                      type="button"
-                      onClick={() => handleModeChange(agent.id, 'both')}
-                      className={`agent-mode-pill ${(agentModes[agent.id] || 'both') === 'both' ? 'active' : ''}`}
-                    >
-                      🎙️💬 Both
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleModeChange(agent.id, 'text-only')}
-                      className={`agent-mode-pill ${(agentModes[agent.id] || 'both') === 'text-only' ? 'active' : ''}`}
-                    >
-                      💬 Text Only
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleModeChange(agent.id, 'voice-only')}
-                      className={`agent-mode-pill ${(agentModes[agent.id] || 'both') === 'voice-only' ? 'active' : ''}`}
-                    >
-                      🎙️ Voice Only
-                    </button>
                   </div>
-                </div>
-
-                {/* Features Tags */}
-                <div className="card-features-row">
-                  <span className="feature-pill-badge">
-                    <Volume2 size={11} className="inline mr-1" />
-                    {(agentModes[agent.id] || 'both') === 'text-only' ? 'Text Mode (Silent)' : (agent.voiceName || 'Voice Output Active')}
-                  </span>
-                  <span className="feature-pill-badge">
-                    <BrainCircuit size={11} className="inline mr-1" />
-                    Memory Saving
-                  </span>
-                  <span className="feature-pill-badge">
-                    {(agentModes[agent.id] || 'both') === 'text-only' ? '⚡ Instant Text' : '⚡ Real-time Speech'}
-                  </span>
-                </div>
-
-                {/* Launch Button */}
-                <button
-                  type="button"
-                  onClick={() => handleLaunch(agent)}
-                  className={`btn-launch-prebuilt ${agent.domain}-launch-btn`}
-                >
-                  <span>Launch {agentNames[agent.id] || agent.name}</span>
-                  <ArrowRight size={16} />
-                </button>
+                )}
               </div>
             );
           })}
@@ -369,4 +458,3 @@ export function ChooseAgentScreen() {
     </div>
   );
 }
-

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useAgent } from '../../context/AgentContext';
 import { DOMAINS } from '../../data/domains';
 import { VOICE_PERSONAS } from '../../data/voices';
@@ -29,7 +29,8 @@ import {
   BookOpenCheck,
   TrendingUp,
   Lock,
-  CheckCircle2
+  CheckCircle2,
+  ChevronDown
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -57,18 +58,18 @@ export function CreateAgentForm() {
 
   // Active step: 1: Identity & Domain | 2: Voice & Interaction | 3: Tools & Knowledge
   const [activeStep, setActiveStep] = useState(1);
-  // Track completed steps explicitly so tick symbol ONLY appears after user completes a step
   const [completedSteps, setCompletedSteps] = useState({
     1: false,
     2: false,
     3: false
   });
   const [stepWarning, setStepWarning] = useState(null);
-  const [hasCustomName, setHasCustomName] = useState(false);
+  const [isDomainDropdownOpen, setIsDomainDropdownOpen] = useState(false);
 
   const [isDragOver, setIsDragOver] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(null);
   const fileInputRef = useRef(null);
+  const dropdownRef = useRef(null);
 
   const currentDomainObj = DOMAINS.find((d) => d.id === agentConfig.domain) || DOMAINS[0];
   const currentVoiceObj = VOICE_PERSONAS.find((v) => v.id === (agentConfig.voiceId || 'shimmer')) || VOICE_PERSONAS[0];
@@ -78,14 +79,22 @@ export function CreateAgentForm() {
   const isStep1Valid = Boolean(agentConfig.name?.trim() && agentConfig.role?.trim());
   const isStep2Valid = Boolean(agentConfig.interactionMode && agentConfig.voiceId);
 
-  // Step 2 is unlocked ONLY if step 1 has been completed and remains valid
   const isStep2Unlocked = Boolean(completedSteps[1] && isStep1Valid);
-  // Step 3 is unlocked ONLY if step 2 has been completed and step 1 is still valid
   const isStep3Unlocked = Boolean(completedSteps[2] && isStep2Unlocked);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsDomainDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Handle Domain Selection without overwriting user-given Name and Role
   const handleDomainSelect = (domainId) => {
-    // If user has entered a name or role, preserve them
     const keepName = Boolean(agentConfig.name && agentConfig.name.trim());
     const keepRole = Boolean(agentConfig.role && agentConfig.role.trim());
 
@@ -93,14 +102,13 @@ export function CreateAgentForm() {
       keepName,
       keepRole
     });
+    setIsDomainDropdownOpen(false);
   };
 
-  // Option to explicitly apply the domain's default name and role if the user wishes
   const handleApplyDomainDefaults = () => {
     if (!currentDomainObj) return;
     updateAgentField('name', currentDomainObj.defaultName);
     updateAgentField('role', currentDomainObj.defaultRole);
-    setHasCustomName(true);
   };
 
   const handleTestVoice = (persona) => {
@@ -228,7 +236,7 @@ export function CreateAgentForm() {
   return (
     <div className="create-agent-studio-view">
       <div className="create-agent-studio-container">
-        {/* Top Header Navigation: Clean with only Back & AI Agent Studio badge */}
+        {/* Top Header Navigation */}
         <div className="studio-top-nav">
           <button
             type="button"
@@ -241,22 +249,22 @@ export function CreateAgentForm() {
 
           <div className="studio-top-actions">
             <div className="badge-creation-mode">
-              <Sparkles size={13} className="text-purple-600" />
+              <Sparkles size={14} className="text-purple-600" />
               <span>AI Agent Studio</span>
             </div>
           </div>
         </div>
 
-        {/* Page Main Headline */}
+        {/* Page Main Headline & Stepper Bar */}
         <div className="studio-header-card">
           <div className="studio-header-info">
-            <h1 className="studio-title">Create Custom AI Agent</h1>
+            <h1 className="studio-title">Create AI Agent</h1>
             <p className="studio-subtitle">
-              Configure your agent’s identity, conversational style, intelligence tools, and custom knowledge.
+              Configure agent identity, domain expertise, interaction style, and neural voice.
             </p>
           </div>
 
-          {/* Stepper Navigation Pills with Strict Step-Locking */}
+          {/* Stepper Navigation Pills */}
           <div className="studio-stepper-bar">
             {/* Step 1 Tab */}
             <button
@@ -266,7 +274,7 @@ export function CreateAgentForm() {
             >
               <div className="step-tab-number">
                 {completedSteps[1] && isStep1Valid ? (
-                  <Check size={12} strokeWidth={3} />
+                  <Check size={13} strokeWidth={3} />
                 ) : (
                   '1'
                 )}
@@ -290,9 +298,9 @@ export function CreateAgentForm() {
             >
               <div className="step-tab-number">
                 {!isStep2Unlocked ? (
-                  <Lock size={12} className="lock-icon" />
+                  <Lock size={13} className="lock-icon" />
                 ) : completedSteps[2] ? (
-                  <Check size={12} strokeWidth={3} />
+                  <Check size={13} strokeWidth={3} />
                 ) : (
                   '2'
                 )}
@@ -316,9 +324,9 @@ export function CreateAgentForm() {
             >
               <div className="step-tab-number">
                 {!isStep3Unlocked ? (
-                  <Lock size={12} className="lock-icon" />
+                  <Lock size={13} className="lock-icon" />
                 ) : completedSteps[3] ? (
-                  <Check size={12} strokeWidth={3} />
+                  <Check size={13} strokeWidth={3} />
                 ) : (
                   '3'
                 )}
@@ -342,13 +350,13 @@ export function CreateAgentForm() {
 
         {/* 2-Column Responsive Studio Layout */}
         <div className="create-agent-studio-layout">
-          {/* LEFT COLUMN: Clean, Spacious Form Sections */}
+          {/* LEFT COLUMN: Scrollable Form Sections */}
           <form onSubmit={handleSubmit} className="studio-form-column">
             {/* ========================================================
                 SECTION 1: Identity & Domain Expertise
                ======================================================== */}
             {activeStep === 1 && (
-              <div id="studio-section-identity" className="studio-section-card">
+              <div id="studio-section-identity" className="studio-section-card animate-fadeIn">
                 <div className="studio-section-header">
                   <div className="studio-icon-circle text-purple-600">
                     <User size={18} />
@@ -359,22 +367,22 @@ export function CreateAgentForm() {
                       <span className="badge-required-pill">Required</span>
                     </div>
                     <p className="studio-section-desc">
-                      Define the custom name, role, and domain for your AI assistant. Changing domain will preserve your custom name & role.
+                      Define name, role, and choose a domain. Custom name & role will always be preserved.
                     </p>
                   </div>
                 </div>
 
-                {/* Name & Role Inputs */}
+                {/* Name & Role Inputs in 2-Col Grid */}
                 <div className="studio-inputs-grid">
                   <div className="form-input-group">
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center justify-between mb-1.5">
                       <label className="form-field-label">
                         Agent Name <span className="text-purple-600">*</span>
                       </label>
                       {agentConfig.name && (
                         <span className="badge-name-preserved">
-                          <CheckCircle2 size={11} />
-                          <span>Custom Name Saved</span>
+                          <CheckCircle2 size={12} />
+                          <span>Custom Saved</span>
                         </span>
                       )}
                     </div>
@@ -382,11 +390,8 @@ export function CreateAgentForm() {
                       type="text"
                       className="aurqo-input-field"
                       value={agentConfig.name}
-                      onChange={(e) => {
-                        updateAgentField('name', e.target.value);
-                        setHasCustomName(true);
-                      }}
-                      placeholder="e.g. Socrates STEM Tutor, Grand Azure Concierge"
+                      onChange={(e) => updateAgentField('name', e.target.value)}
+                      placeholder="e.g. Grand Aurora Luxury Concierge"
                       required
                     />
                     {currentDomainObj && agentConfig.name !== currentDomainObj.defaultName && (
@@ -395,7 +400,7 @@ export function CreateAgentForm() {
                           type="button"
                           className="btn-suggest-domain-name"
                           onClick={handleApplyDomainDefaults}
-                          title={`Click if you want to use the default name: ${currentDomainObj.defaultName}`}
+                          title={`Click to use default: ${currentDomainObj.defaultName}`}
                         >
                           <Sparkles size={12} />
                           <span>Suggest for {currentDomainObj.name}: <strong>{currentDomainObj.defaultName}</strong></span>
@@ -405,68 +410,107 @@ export function CreateAgentForm() {
                   </div>
 
                   <div className="form-input-group">
-                    <label className="form-field-label">
+                    <label className="form-field-label mb-1.5 block">
                       Agent Role / Specialty Purpose <span className="text-purple-600">*</span>
                     </label>
                     <input
                       type="text"
                       className="aurqo-input-field"
                       value={agentConfig.role}
-                      onChange={(e) => {
-                        updateAgentField('role', e.target.value);
-                        setHasCustomName(true);
-                      }}
-                      placeholder="e.g. Interactive Educational Companion & STEM Tutor"
+                      onChange={(e) => updateAgentField('role', e.target.value)}
+                      placeholder="e.g. Front Desk Hospitality & Guest Services Specialist"
                       required
                     />
                   </div>
                 </div>
 
-                {/* Domain Selector Grid */}
-                <div className="studio-sub-block mt-4">
+                {/* Select Domain Expertise - Dropdown with Arrow Click */}
+                <div className="studio-sub-block mt-4" ref={dropdownRef}>
                   <div className="flex items-center justify-between mb-2">
                     <div>
                       <h3 className="studio-sub-title">Select Domain Expertise</h3>
                       <p className="studio-sub-desc">
-                        Configures domain instructions and discovery questions without altering your custom name.
+                        Configures domain knowledge model without altering your custom name.
                       </p>
                     </div>
-                    <span className="badge-count-pill">{DOMAINS.length} Domains</span>
+                    <span className="badge-count-pill">{DOMAINS.length} Domains Available</span>
                   </div>
 
-                  <div className="domains-modern-grid">
-                    {DOMAINS.map((domain) => {
-                      const Icon = ICON_MAP[domain.icon] || Sparkles;
-                      const isSelected = agentConfig.domain === domain.id;
-
-                      return (
-                        <div
-                          key={domain.id}
-                          onClick={() => handleDomainSelect(domain.id)}
-                          className={`domain-modern-card ${isSelected ? 'selected' : ''}`}
-                        >
-                          <div className="domain-card-head">
-                            <div className="domain-card-icon-wrap" style={{ color: domain.color }}>
-                              <Icon size={20} />
-                            </div>
-                            {isSelected && (
-                              <div className="domain-card-selected-check">
-                                <Check size={12} strokeWidth={3} />
-                              </div>
-                            )}
-                          </div>
-                          <h4 className="domain-card-name">{domain.name}</h4>
-                          <p className="domain-card-desc">{domain.description}</p>
-                          <span className="domain-card-tag">{domain.tag}</span>
+                  <div className="domain-dropdown-container relative">
+                    {/* Trigger Button showing Selected Domain with Down Arrow */}
+                    <button
+                      type="button"
+                      onClick={() => setIsDomainDropdownOpen((prev) => !prev)}
+                      className={`domain-dropdown-trigger-btn ${isDomainDropdownOpen ? 'open' : ''}`}
+                    >
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <div className="domain-dropdown-icon-wrap" style={{ color: currentDomainObj.color }}>
+                          {(() => {
+                            const CurrIcon = ICON_MAP[currentDomainObj.icon] || Sparkles;
+                            return <CurrIcon size={20} />;
+                          })()}
                         </div>
-                      );
-                    })}
+                        <div className="text-left flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="domain-dropdown-selected-name">{currentDomainObj.name}</span>
+                            <span className="domain-dropdown-tag-pill">{currentDomainObj.tag}</span>
+                          </div>
+                          <p className="domain-dropdown-selected-desc truncate">
+                            {currentDomainObj.description}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="domain-dropdown-caret-box">
+                        <ChevronDown
+                          size={18}
+                          className={`transition-transform duration-200 text-gray-400 ${isDomainDropdownOpen ? 'rotate-180 text-blue-600' : ''}`}
+                        />
+                      </div>
+                    </button>
+
+                    {/* Dropdown Menu Popup (Scrollable with all 8 domains) */}
+                    {isDomainDropdownOpen && (
+                      <div className="domain-dropdown-menu-list animate-fadeIn">
+                        {DOMAINS.map((domain) => {
+                          const Icon = ICON_MAP[domain.icon] || Sparkles;
+                          const isSelected = agentConfig.domain === domain.id;
+
+                          return (
+                            <div
+                              key={domain.id}
+                              onClick={() => handleDomainSelect(domain.id)}
+                              className={`domain-dropdown-row-item ${isSelected ? 'selected' : ''}`}
+                            >
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <div className="domain-dropdown-icon-wrap" style={{ color: domain.color }}>
+                                  <Icon size={18} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="domain-row-title">{domain.name}</span>
+                                    <span className="domain-row-tag">{domain.tag}</span>
+                                  </div>
+                                  <p className="domain-row-desc truncate">{domain.description}</p>
+                                </div>
+                              </div>
+
+                              {isSelected && (
+                                <div className="domain-row-check">
+                                  <Check size={14} strokeWidth={3} />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Stepper Navigation Actions */}
+                {/* Stepper Navigation Footer */}
                 <div className="studio-step-footer">
-                  <div className="flex items-center gap-2 text-xs text-sub font-medium">
+                  <div className="flex items-center gap-2 text-sm text-sub font-medium">
                     <span>Step 1 of 3</span>
                   </div>
                   <button
@@ -485,7 +529,7 @@ export function CreateAgentForm() {
                 SECTION 2: Customer Interaction Mode & Voice Persona
                ======================================================== */}
             {activeStep === 2 && (
-              <div id="studio-section-voice" className="studio-section-card">
+              <div id="studio-section-voice" className="studio-section-card animate-fadeIn">
                 <div className="studio-section-header">
                   <div className="studio-icon-circle text-blue-600">
                     <MessageSquare size={18} />
@@ -493,7 +537,7 @@ export function CreateAgentForm() {
                   <div>
                     <h2 className="studio-section-title">2. Customer Interaction Mode & Voice</h2>
                     <p className="studio-section-desc">
-                      Choose how users communicate with this agent and select the neural voice persona.
+                      Choose communication mode and select neural voice persona.
                     </p>
                   </div>
                 </div>
@@ -501,84 +545,64 @@ export function CreateAgentForm() {
                 {/* Interaction Mode Choice Cards */}
                 <div className="studio-sub-block">
                   <h3 className="studio-sub-title">Customer Interaction Mode</h3>
-                  <div className="mode-modern-grid">
-                    {/* Hybrid Both */}
+                  <div className="mode-compact-grid">
+                    {/* Both */}
                     <div
-                      className={`mode-modern-card ${agentConfig.interactionMode === 'both' ? 'selected' : ''}`}
+                      className={`mode-compact-card ${agentConfig.interactionMode === 'both' ? 'selected' : ''}`}
                       onClick={() => updateAgentField('interactionMode', 'both')}
                     >
-                      <div className="mode-card-top">
-                        <span className="mode-card-emoji">🎙️💬</span>
-                        <span className="badge-recommended">Recommended</span>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="mode-emoji">🎙️💬</span>
+                        <span className="badge-rec-tiny">Recommended</span>
                       </div>
-                      <h4 className="mode-card-title">Both Voice & Text</h4>
-                      <p className="mode-card-desc">
-                        Conversational speech aloud with simultaneous live text messages.
-                      </p>
-                      <div className="mode-card-pill">Spoken Voice + Visual Chat</div>
+                      <h4 className="mode-title-text">Both Voice & Text</h4>
+                      <p className="mode-desc-text">Conversational speech with live interactive text</p>
+                      <span className="mode-pill-tag">Spoken Voice + Chat</span>
                     </div>
 
                     {/* Text Only */}
                     <div
-                      className={`mode-modern-card ${agentConfig.interactionMode === 'text-only' ? 'selected' : ''}`}
+                      className={`mode-compact-card ${agentConfig.interactionMode === 'text-only' ? 'selected' : ''}`}
                       onClick={() => updateAgentField('interactionMode', 'text-only')}
                     >
-                      <div className="mode-card-top">
-                        <span className="mode-card-emoji">💬</span>
-                        {agentConfig.interactionMode === 'text-only' && (
-                          <div className="mode-card-selected-check">
-                            <Check size={12} />
-                          </div>
-                        )}
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="mode-emoji">💬</span>
+                        {agentConfig.interactionMode === 'text-only' && <Check size={14} className="text-blue-600" />}
                       </div>
-                      <h4 className="mode-card-title">Text Message Only</h4>
-                      <p className="mode-card-desc">
-                        Fast, silent messaging for customers who prefer typed text without speech.
-                      </p>
-                      <div className="mode-card-pill">Silent Responses • No Mic</div>
+                      <h4 className="mode-title-text">Text Message Only</h4>
+                      <p className="mode-desc-text">Fast, silent messaging without speech audio</p>
+                      <span className="mode-pill-tag">Silent • No Mic</span>
                     </div>
 
                     {/* Voice Only */}
                     <div
-                      className={`mode-modern-card ${agentConfig.interactionMode === 'voice-only' ? 'selected' : ''}`}
+                      className={`mode-compact-card ${agentConfig.interactionMode === 'voice-only' ? 'selected' : ''}`}
                       onClick={() => updateAgentField('interactionMode', 'voice-only')}
                     >
-                      <div className="mode-card-top">
-                        <span className="mode-card-emoji">🎙️</span>
-                        {agentConfig.interactionMode === 'voice-only' && (
-                          <div className="mode-card-selected-check">
-                            <Check size={12} />
-                          </div>
-                        )}
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="mode-emoji">🎙️</span>
+                        {agentConfig.interactionMode === 'voice-only' && <Check size={14} className="text-blue-600" />}
                       </div>
-                      <h4 className="mode-card-title">Voice Only (Call Stage)</h4>
-                      <p className="mode-card-desc">
-                        Hands-free audio phone-call style conversational stream.
-                      </p>
-                      <div className="mode-card-pill">Real-time Audio Call</div>
+                      <h4 className="mode-title-text">Voice Only (Call)</h4>
+                      <p className="mode-desc-text">Hands-free real-time audio phone-call style</p>
+                      <span className="mode-pill-tag">Real-time Call</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Voice Persona Selection */}
+                {/* Neural Voice Persona Grid */}
                 <div className="studio-sub-block mt-4">
                   <div className="flex items-center justify-between mb-2">
                     <div>
                       <h3 className="studio-sub-title">Neural Voice Persona</h3>
                       <p className="studio-sub-desc">
-                        High-quality human-like voices with instant sample audio preview.
+                        High-quality human-like voices with instant sample preview.
                       </p>
                     </div>
                     <span className="badge-count-pill">{VOICE_PERSONAS.length} Voices</span>
                   </div>
 
-                  {agentConfig.interactionMode === 'text-only' && (
-                    <div className="text-only-hint-banner mb-3">
-                      💬 Note: Text-Only mode is active. Voice is muted during text chat but can be activated anytime.
-                    </div>
-                  )}
-
-                  <div className="voices-modern-grid">
+                  <div className="voices-compact-grid">
                     {VOICE_PERSONAS.map((persona) => {
                       const isSelected = (agentConfig.voiceId || 'shimmer') === persona.id;
                       const isPlaying = isPlayingAudio === persona.id;
@@ -590,49 +614,49 @@ export function CreateAgentForm() {
                             updateAgentField('voiceId', persona.id);
                             updateAgentField('voiceName', `${persona.name} (${persona.gender})`);
                           }}
-                          className={`voice-modern-card ${isSelected ? 'selected' : ''}`}
+                          className={`voice-compact-card ${isSelected ? 'selected' : ''}`}
                         >
-                          <div className="voice-card-top">
+                          <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2.5">
-                              <span className="voice-avatar-emoji">{persona.avatar}</span>
+                              <span className="text-base">{persona.avatar}</span>
                               <div>
-                                <h4 className="voice-name">{persona.name}</h4>
-                                <span className={`voice-gender-tag ${persona.gender.toLowerCase().includes('female') ? 'female' : 'male'}`}>
-                                  {persona.gender}
-                                </span>
+                                <div className="flex items-center gap-1.5">
+                                  <h4 className="voice-compact-name">{persona.name}</h4>
+                                  <span className={`voice-gender-pill ${persona.gender.toLowerCase().includes('female') ? 'female' : 'male'}`}>
+                                    {persona.gender}
+                                  </span>
+                                </div>
+                                <span className="voice-compact-tone">{persona.tone}</span>
                               </div>
                             </div>
 
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleTestVoice(persona);
-                              }}
-                              className={`btn-voice-preview ${isPlaying ? 'playing' : ''}`}
-                              title="Listen to sample voice"
-                            >
-                              {isPlaying ? <Pause size={12} /> : <Play size={12} />}
-                              <span>{isPlaying ? 'Playing' : 'Preview'}</span>
-                            </button>
-                          </div>
-
-                          <p className="voice-desc">{persona.desc}</p>
-                          <span className="voice-tone-pill">{persona.tone}</span>
-
-                          {isSelected && (
-                            <div className="voice-card-active-check">
-                              <Check size={12} />
-                              <span>Active Voice</span>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleTestVoice(persona);
+                                }}
+                                className={`btn-voice-preview-compact ${isPlaying ? 'playing' : ''}`}
+                                title="Listen to voice sample"
+                              >
+                                {isPlaying ? <Pause size={12} /> : <Play size={12} />}
+                                <span>{isPlaying ? 'Playing' : 'Preview'}</span>
+                              </button>
+                              {isSelected && (
+                                <div className="voice-active-check-dot" title="Active Voice">
+                                  <Check size={12} strokeWidth={3} />
+                                </div>
+                              )}
                             </div>
-                          )}
+                          </div>
                         </div>
                       );
                     })}
                   </div>
                 </div>
 
-                {/* Stepper Navigation Actions */}
+                {/* Stepper Navigation Footer */}
                 <div className="studio-step-footer">
                   <button
                     type="button"
@@ -658,7 +682,7 @@ export function CreateAgentForm() {
                 SECTION 3: Tools, Knowledge Files & Memory
                ======================================================== */}
             {activeStep === 3 && (
-              <div id="studio-section-tools" className="studio-section-card">
+              <div id="studio-section-tools" className="studio-section-card animate-fadeIn">
                 <div className="studio-section-header">
                   <div className="studio-icon-circle text-emerald-600">
                     <Wrench size={18} />
@@ -666,7 +690,7 @@ export function CreateAgentForm() {
                   <div>
                     <h2 className="studio-section-title">3. Intelligence Tools & Knowledge Base</h2>
                     <p className="studio-section-desc">
-                      Equip your agent with real-time web search, code execution, knowledge files, and memory.
+                      Equip agent with live web search, code execution, uploaded knowledge files, and memory.
                     </p>
                   </div>
                 </div>
@@ -678,79 +702,79 @@ export function CreateAgentForm() {
                     <span className="badge-count-pill">{activeToolsCount} of 4 Active</span>
                   </div>
 
-                  <div className="tools-modern-grid">
+                  <div className="tools-compact-grid">
                     {/* Tool 1: Web Search */}
                     <div
-                      className={`tool-modern-card ${agentConfig.tools?.webSearch ? 'active' : ''}`}
+                      className={`tool-compact-card ${agentConfig.tools?.webSearch ? 'active' : ''}`}
                       onClick={() => toggleTool('webSearch')}
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="tool-modern-icon text-blue-500">
+                      <div className="flex items-center gap-2.5">
+                        <div className="tool-icon-box text-blue-500">
                           <Globe size={18} />
                         </div>
                         <div>
-                          <h4 className="tool-modern-title">Live Web Search</h4>
-                          <p className="tool-modern-desc">Live internet queries & latest data</p>
+                          <h4 className="tool-card-name">Live Web Search</h4>
+                          <p className="tool-card-sub">Internet queries & latest data</p>
                         </div>
                       </div>
-                      <div className={`aurqo-toggle ${agentConfig.tools?.webSearch ? 'on' : ''}`}>
+                      <div className={`aurqo-toggle-compact ${agentConfig.tools?.webSearch ? 'on' : ''}`}>
                         <div className="toggle-thumb" />
                       </div>
                     </div>
 
                     {/* Tool 2: Code Interpreter */}
                     <div
-                      className={`tool-modern-card ${agentConfig.tools?.codeInterpreter ? 'active' : ''}`}
+                      className={`tool-compact-card ${agentConfig.tools?.codeInterpreter ? 'active' : ''}`}
                       onClick={() => toggleTool('codeInterpreter')}
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="tool-modern-icon text-purple-600">
+                      <div className="flex items-center gap-2.5">
+                        <div className="tool-icon-box text-purple-600">
                           <Terminal size={18} />
                         </div>
                         <div>
-                          <h4 className="tool-modern-title">Code Interpreter</h4>
-                          <p className="tool-modern-desc">Python math, logic & algorithm solver</p>
+                          <h4 className="tool-card-name">Code Interpreter</h4>
+                          <p className="tool-card-sub">Python math & logic solver</p>
                         </div>
                       </div>
-                      <div className={`aurqo-toggle ${agentConfig.tools?.codeInterpreter ? 'on' : ''}`}>
+                      <div className={`aurqo-toggle-compact ${agentConfig.tools?.codeInterpreter ? 'on' : ''}`}>
                         <div className="toggle-thumb" />
                       </div>
                     </div>
 
                     {/* Tool 3: Image Generator */}
                     <div
-                      className={`tool-modern-card ${agentConfig.tools?.imageGen ? 'active' : ''}`}
+                      className={`tool-compact-card ${agentConfig.tools?.imageGen ? 'active' : ''}`}
                       onClick={() => toggleTool('imageGen')}
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="tool-modern-icon text-pink-500">
+                      <div className="flex items-center gap-2.5">
+                        <div className="tool-icon-box text-pink-500">
                           <Image size={18} />
                         </div>
                         <div>
-                          <h4 className="tool-modern-title">Image Generator</h4>
-                          <p className="tool-modern-desc">Generates visual diagrams & graphics</p>
+                          <h4 className="tool-card-name">Image Generator</h4>
+                          <p className="tool-card-sub">Visual diagrams & graphics</p>
                         </div>
                       </div>
-                      <div className={`aurqo-toggle ${agentConfig.tools?.imageGen ? 'on' : ''}`}>
+                      <div className={`aurqo-toggle-compact ${agentConfig.tools?.imageGen ? 'on' : ''}`}>
                         <div className="toggle-thumb" />
                       </div>
                     </div>
 
                     {/* Tool 4: Knowledge Search */}
                     <div
-                      className={`tool-modern-card ${agentConfig.tools?.knowledgeSearch ? 'active' : ''}`}
+                      className={`tool-compact-card ${agentConfig.tools?.knowledgeSearch ? 'active' : ''}`}
                       onClick={() => toggleTool('knowledgeSearch')}
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="tool-modern-icon text-emerald-500">
+                      <div className="flex items-center gap-2.5">
+                        <div className="tool-icon-box text-emerald-500">
                           <Database size={18} />
                         </div>
                         <div>
-                          <h4 className="tool-modern-title">Knowledge Search</h4>
-                          <p className="tool-modern-desc">RAG retrieval across uploaded docs</p>
+                          <h4 className="tool-card-name">Knowledge Search</h4>
+                          <p className="tool-card-sub">RAG retrieval across docs</p>
                         </div>
                       </div>
-                      <div className={`aurqo-toggle ${agentConfig.tools?.knowledgeSearch ? 'on' : ''}`}>
+                      <div className={`aurqo-toggle-compact ${agentConfig.tools?.knowledgeSearch ? 'on' : ''}`}>
                         <div className="toggle-thumb" />
                       </div>
                     </div>
@@ -765,7 +789,7 @@ export function CreateAgentForm() {
                   </div>
 
                   <div
-                    className={`dropzone-modern ${isDragOver ? 'drag-active' : ''}`}
+                    className={`dropzone-compact ${isDragOver ? 'drag-active' : ''}`}
                     onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
                     onDragLeave={() => setIsDragOver(false)}
                     onDrop={handleFileDrop}
@@ -779,17 +803,15 @@ export function CreateAgentForm() {
                       accept=".pdf,.docx,.txt,.csv,.json,.md,.py,.js,.ts"
                       style={{ display: 'none' }}
                     />
-                    <div className="dropzone-modern-icon">
-                      <UploadCloud size={24} className="text-purple-600" />
-                    </div>
-                    <p className="dropzone-title">Click to upload or drag & drop files here</p>
-                    <p className="dropzone-subtitle">PDF, DOCX, CSV, TXT, Code files (Up to 30MB)</p>
+                    <UploadCloud size={22} className="text-purple-600" />
+                    <span className="dropzone-text-main">Click to upload or drag files here</span>
+                    <span className="dropzone-text-sub">PDF, DOCX, CSV, TXT (Up to 30MB)</span>
                   </div>
 
                   {agentConfig.files?.length > 0 && (
-                    <div className="uploaded-chips-container mt-3">
+                    <div className="uploaded-chips-container mt-2.5">
                       {agentConfig.files.map((file) => (
-                        <div key={file.id} className="file-chip-card">
+                        <div key={file.id} className="file-chip-compact">
                           <div className="flex items-center gap-2">
                             <FileText size={14} className="text-purple-600" />
                             <span className="file-chip-name">{file.name}</span>
@@ -811,21 +833,17 @@ export function CreateAgentForm() {
 
                 {/* Cross Session Vector Memory */}
                 <div className="studio-sub-block mt-4">
-                  <div className="memory-feature-box">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-3">
-                        <div className="memory-icon-wrap text-purple-600">
-                          <BrainCircuit size={20} />
-                        </div>
+                  <div className="memory-feature-compact">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <BrainCircuit size={20} className="text-purple-600" />
                         <div>
                           <h4 className="memory-title">Cross-Session Vector Memory</h4>
-                          <p className="memory-desc">
-                            Enables the agent to remember customer facts, preferences, and conversations across sessions.
-                          </p>
+                          <p className="memory-desc">Remembers customer facts, history, and preferences across chats</p>
                         </div>
                       </div>
                       <div
-                        className={`aurqo-toggle ${agentConfig.memorySaving ? 'on' : ''}`}
+                        className={`aurqo-toggle-compact ${agentConfig.memorySaving ? 'on' : ''}`}
                         onClick={() => updateAgentField('memorySaving', !agentConfig.memorySaving)}
                       >
                         <div className="toggle-thumb" />
@@ -834,7 +852,7 @@ export function CreateAgentForm() {
                   </div>
                 </div>
 
-                {/* Stepper Navigation Actions */}
+                {/* Stepper Navigation Footer */}
                 <div className="studio-step-footer">
                   <button
                     type="button"
@@ -859,7 +877,7 @@ export function CreateAgentForm() {
 
           {/* RIGHT COLUMN: Sticky Real-Time Live Agent Preview Card */}
           <div className="studio-preview-column">
-            <div className="sticky-preview-card">
+            <div className="sticky-preview-card-compact">
               {/* Card Header & Live Status */}
               <div className="preview-card-top-bar">
                 <div className="preview-pulse-dot" />
@@ -871,7 +889,7 @@ export function CreateAgentForm() {
                 <div className="preview-avatar-circle">
                   <span className="preview-avatar-icon">
                     {currentDomainObj?.icon && ICON_MAP[currentDomainObj.icon] ? (
-                      React.createElement(ICON_MAP[currentDomainObj.icon], { size: 26 })
+                      React.createElement(ICON_MAP[currentDomainObj.icon], { size: 24 })
                     ) : (
                       '🤖'
                     )}
@@ -902,11 +920,11 @@ export function CreateAgentForm() {
               <div className="preview-specs-box">
                 {/* Voice Persona */}
                 <div className="preview-spec-item">
-                  <div className="flex items-center gap-2">
-                    <Volume2 size={14} className="text-purple-600" />
+                  <div className="flex items-center gap-1.5">
+                    <Volume2 size={15} className="text-purple-600" />
                     <span className="spec-label">Voice:</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <span className="spec-value">
                       {currentVoiceObj.avatar} {currentVoiceObj.name}
                     </span>
@@ -914,7 +932,7 @@ export function CreateAgentForm() {
                       type="button"
                       onClick={() => handleTestVoice(currentVoiceObj)}
                       className="btn-preview-mini-audio"
-                      title="Test Audio"
+                      title="Test Voice"
                     >
                       {isPlayingAudio === currentVoiceObj.id ? <Pause size={10} /> : <Play size={10} />}
                     </button>
@@ -923,8 +941,8 @@ export function CreateAgentForm() {
 
                 {/* Capabilities Tools */}
                 <div className="preview-spec-item">
-                  <div className="flex items-center gap-2">
-                    <Wrench size={14} className="text-blue-600" />
+                  <div className="flex items-center gap-1.5">
+                    <Wrench size={15} className="text-blue-600" />
                     <span className="spec-label">Tools:</span>
                   </div>
                   <div className="spec-tools-chips">
@@ -938,19 +956,19 @@ export function CreateAgentForm() {
 
                 {/* Knowledge Base Files */}
                 <div className="preview-spec-item">
-                  <div className="flex items-center gap-2">
-                    <Database size={14} className="text-emerald-600" />
+                  <div className="flex items-center gap-1.5">
+                    <Database size={15} className="text-emerald-600" />
                     <span className="spec-label">Knowledge:</span>
                   </div>
                   <span className="spec-value">
-                    {agentConfig.files?.length || 0} Files Attached
+                    {agentConfig.files?.length || 0} Files
                   </span>
                 </div>
 
                 {/* Vector Memory */}
                 <div className="preview-spec-item">
-                  <div className="flex items-center gap-2">
-                    <BrainCircuit size={14} className="text-amber-500" />
+                  <div className="flex items-center gap-1.5">
+                    <BrainCircuit size={15} className="text-amber-500" />
                     <span className="spec-label">Memory:</span>
                   </div>
                   <span className="spec-value">
@@ -963,7 +981,7 @@ export function CreateAgentForm() {
               <div className="preview-speech-bubble">
                 <span className="speech-quote-mark">“</span>
                 <p className="speech-text">
-                  Hello! I am <strong>{agentConfig.name || 'your agent'}</strong>, your {agentConfig.role || 'assistant'}. I am ready to guide you in {currentDomainObj.name}!
+                  Hello! I am <strong>{agentConfig.name || 'your agent'}</strong>, your {agentConfig.role || 'assistant'}. Ready to assist in {currentDomainObj.name}!
                 </p>
               </div>
 

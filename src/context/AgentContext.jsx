@@ -189,9 +189,9 @@ export function AgentProvider({ children }) {
     ]
   };
 
-  const DEFAULT_ROBOT_WELCOME = `👋 **Hello! I am your Thamili 3D AI Robot Guide.**\n\nWelcome to the **Thamili AI Agent Platform**!\n\n✨ **What can this AI Agent do?**\nIt allows you to build, customize, and interact with intelligent AI agents that communicate via natural voice & text, answer complex domain questions, search uploaded documents, and execute web research autonomously.\n\n🛠️ **What features are included in this platform?**\n- **Real-Time Neural Speech & Call Stage**: 5 human-like voices with hands-free voice chat.\n- **Custom Agent Builder**: Easily configure your agent's name, role, domain, memory, and tools.\n- **Pre-Built Agent Templates**: Instant agents for Hospitality, Travel, STEM, Coding, and Healthcare.\n- **Autonomous Tool Suite**: Live Web Search, Code Interpreter, Image Generator, and Knowledge Search.\n\n🎯 **Who can use this & what can it be used for?**\n- **Businesses & Hotels**: 24/7 guest concierge, room bookings, and customer support.\n- **Doctors & Healthcare**: Patient FAQ triage and consultation guidance.\n- **Developers & Tech Teams**: Code generation, architecture, and syntax debugging.\n- **Teachers & Students**: 1-on-1 personalized tutoring and academic problem solving.\n- **Travel Agencies**: Trip itineraries, flight comparisons, and destination advice.\n\nClick any question below or speak aloud using your microphone!`;
+  const DEFAULT_ROBOT_WELCOME = `👋 Welcome to **Thamili 3D AI Robot**! How can I help you?`;
 
-  const DEFAULT_ROBOT_SPOKEN_INTRO = `Hello and welcome! I am your Thamili AI Robot Assistant. Here, you can create custom AI agents or choose ready templates with natural voice and text. Anyone can use our platform—from businesses and doctors to teachers and developers—to automate customer inquiries, research knowledge, and boost productivity. How can I help you today?`;
+  const DEFAULT_ROBOT_SPOKEN_INTRO = `Welcome to Thamili 3D AI Robot! How can I help you today?`;
 
   // Active Agent Configuration State
   const [agentConfig, setAgentConfig] = useState(DEFAULT_ROBOT_CONFIG);
@@ -617,13 +617,9 @@ export function AgentProvider({ children }) {
     });
 
     const domainObj = DOMAINS.find(d => d.id === finalConfig.domain) || DOMAINS[0];
-    const questions = domainObj.discoveryQuestions || [];
-
-    // Warm welcome greeting and detailed self-introduction for the created agent
-    const welcomeGreeting = `👋 **Welcome! I am ${finalConfig.name}**, your dedicated **${finalConfig.role}**.\n\nI am here to provide you with expert assistance, smart problem-solving, and real-time answers in **${domainObj.name}**.\n\nHere are some questions you can ask me to get started:\n1. ${questions[0] || 'How can you help me today?'}\n2. ${questions[1] || 'Tell me about your capabilities.'}\n3. ${questions[2] || 'Can you guide me step-by-step?'}`;
-
-    // Polite spoken self-introduction
-    const spokenIntro = `Hello and welcome! I am ${finalConfig.name}, your ${finalConfig.role}. I am ready to assist you. How can I help you today?`;
+    // Clean, short welcome greeting and spoken intro
+    const welcomeGreeting = `👋 Welcome to **${finalConfig.name}**! How can I help you?`;
+    const spokenIntro = `Welcome to ${finalConfig.name}! How can I help you?`;
 
     setMessages([
       {
@@ -679,14 +675,9 @@ export function AgentProvider({ children }) {
       return updated;
     });
 
-    const questions = defaultAgent.discoveryQuestions || [];
-    const domainObj = DOMAINS.find(d => d.id === defaultAgent.domain) || DOMAINS[0];
-
-    // Warm welcome greeting and detailed self-introduction
-    const welcomeGreeting = `👋 **Welcome! I am ${finalName}**, your dedicated **${defaultAgent.role}**.\n\nI am here to assist you with all your **${domainObj.name}** inquiries, workflows, and real-time guidance.\n\nHere are some key questions for your convenience:\n1. ${questions[0] || 'How can you assist me today?'}\n2. ${questions[1] || 'Tell me about your services.'}\n3. ${questions[2] || 'What options are available?'}`;
-
-    // Polite spoken self-introduction
-    const spokenIntro = `Hello and welcome! I am ${finalName}, your ${defaultAgent.role}. I am ready to assist you. How can I help you today?`;
+    // Clean, short welcome greeting and spoken intro
+    const welcomeGreeting = `👋 Welcome to **${finalName}**! How can I help you?`;
+    const spokenIntro = `Welcome to ${finalName}! How can I help you?`;
 
     setMessages([
       {
@@ -714,11 +705,8 @@ export function AgentProvider({ children }) {
     setAgentConfig(config);
     agentConfigRef.current = config;
 
-    const domainObj = DOMAINS.find(d => d.id === historyAgent.domain) || DOMAINS[0];
-    const questions = domainObj.discoveryQuestions || [];
-
-    const welcomeGreeting = `👋 **Welcome back to ${historyAgent.name}**, your dedicated **${historyAgent.role}**.\n\nI am ready to assist you with **${domainObj.name}**.\n\nHow can I help you today?`;
-    const spokenIntro = `Hello! Welcome back to ${historyAgent.name}. I am ready to assist you.`;
+    const welcomeGreeting = `👋 Welcome back to **${historyAgent.name}**! How can I help you?`;
+    const spokenIntro = `Welcome back to ${historyAgent.name}! How can I help you?`;
 
     setMessages([
       {
