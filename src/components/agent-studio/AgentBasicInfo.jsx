@@ -9,7 +9,6 @@ import {
   TrendingUp,
   Scale,
   Headphones,
-  Sparkles,
   Bot,
   Cpu,
   Check,
@@ -17,6 +16,7 @@ import {
   Layers,
   Smile
 } from 'lucide-react';
+import { AgentAvatar } from '../agent/AgentAvatar';
 
 const ICON_MAP = {
   Stethoscope,
@@ -26,20 +26,22 @@ const ICON_MAP = {
   TrendingUp,
   Scale,
   Headphones,
-  Sparkles
+  Cpu
 };
 
 const AVATAR_OPTIONS = [
-  { emoji: '🩺', label: 'Doctor / Medical', bg: 'linear-gradient(135deg, #EC4899, #8B5CF6)' },
-  { emoji: '💻', label: 'Coder / Dev', bg: 'linear-gradient(135deg, #3B82F6, #06B6D4)' },
-  { emoji: '🎓', label: 'Tutor / Scholar', bg: 'linear-gradient(135deg, #8B5CF6, #EC4899)' },
-  { emoji: '🔬', label: 'Researcher / Sci', bg: 'linear-gradient(135deg, #10B981, #3B82F6)' },
-  { emoji: '📈', label: 'Analyst / Finance', bg: 'linear-gradient(135deg, #F59E0B, #EF4444)' },
-  { emoji: '⚖️', label: 'Legal / Counsel', bg: 'linear-gradient(135deg, #6366F1, #3B82F6)' },
-  { emoji: '🎧', label: 'Support / Voice', bg: 'linear-gradient(135deg, #06B6D4, #10B981)' },
-  { emoji: '🤖', label: 'Autonomous AI', bg: 'linear-gradient(135deg, #8B5CF6, #3B82F6)' },
-  { emoji: '🌟', label: 'Star / Multilingual', bg: 'linear-gradient(135deg, #F59E0B, #EC4899)' },
-  { emoji: '🚀', label: 'Fast Velocity', bg: 'linear-gradient(135deg, #EF4444, #F59E0B)' }
+  { id: 'medical', label: 'Doctor / Medical', bg: 'linear-gradient(135deg, #EC4899, #8B5CF6)' },
+  { id: 'code', label: 'Coder / Dev', bg: 'linear-gradient(135deg, #3B82F6, #06B6D4)' },
+  { id: 'study', label: 'Tutor / Scholar', bg: 'linear-gradient(135deg, #8B5CF6, #EC4899)' },
+  { id: 'research', label: 'Researcher / Sci', bg: 'linear-gradient(135deg, #10B981, #3B82F6)' },
+  { id: 'finance', label: 'Analyst / Finance', bg: 'linear-gradient(135deg, #F59E0B, #EF4444)' },
+  { id: 'legal', label: 'Legal / Counsel', bg: 'linear-gradient(135deg, #6366F1, #3B82F6)' },
+  { id: 'support', label: 'Support / Voice', bg: 'linear-gradient(135deg, #06B6D4, #10B981)' },
+  { id: 'bot', label: 'Autonomous AI', bg: 'linear-gradient(135deg, #8B5CF6, #3B82F6)' },
+  { id: 'hotel', label: 'Hospitality / Hotel', bg: 'linear-gradient(135deg, #10B981, #059669)' },
+  { id: 'travel', label: 'Travel & Tours', bg: 'linear-gradient(135deg, #3B82F6, #2563EB)' },
+  { id: 'general', label: 'Global / Multilingual', bg: 'linear-gradient(135deg, #F59E0B, #EC4899)' },
+  { id: 'rocket', label: 'Fast Velocity', bg: 'linear-gradient(135deg, #EF4444, #F59E0B)' }
 ];
 
 export function AgentBasicInfo() {
@@ -102,7 +104,7 @@ export function AgentBasicInfo() {
             className="active-avatar-preview"
             style={{ background: agentConfig.avatarBg }}
           >
-            <span className="preview-emoji">{agentConfig.avatar}</span>
+            <AgentAvatar avatar={agentConfig.avatar} domain={agentConfig.domain} size={28} />
           </div>
 
           <div className="avatar-options-grid">
@@ -110,15 +112,15 @@ export function AgentBasicInfo() {
               <button
                 key={idx}
                 type="button"
-                className={`avatar-option-btn ${agentConfig.avatar === opt.emoji ? 'selected' : ''}`}
+                className={`avatar-option-btn ${agentConfig.avatar === opt.id ? 'selected' : ''}`}
                 style={{ background: opt.bg }}
                 onClick={() => {
-                  updateConfig('avatar', opt.emoji);
+                  updateConfig('avatar', opt.id);
                   updateConfig('avatarBg', opt.bg);
                 }}
                 title={opt.label}
               >
-                <span>{opt.emoji}</span>
+                <AgentAvatar avatar={opt.id} size={18} />
               </button>
             ))}
           </div>
@@ -139,7 +141,7 @@ export function AgentBasicInfo() {
 
         <div className="domain-cards-grid">
           {DOMAINS.map((domain) => {
-            const Icon = ICON_MAP[domain.icon] || Sparkles;
+            const Icon = ICON_MAP[domain.icon] || Cpu;
             const isSelected = agentConfig.domain === domain.id;
 
             return (

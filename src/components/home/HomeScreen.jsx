@@ -8,8 +8,7 @@ import {
   GraduationCap,
   Bot,
   Paperclip,
-  ArrowRight,
-  Sparkles
+  ArrowRight
 } from 'lucide-react';
 
 export function HomeScreen() {
@@ -99,7 +98,6 @@ export function HomeScreen() {
       {/* Powered by footer */}
       <footer className="aurqo-home-footer">
         <span>Powered by advanced AI technology</span>
-        <Sparkles size={14} className="text-purple-500" />
       </footer>
     </div>
   );

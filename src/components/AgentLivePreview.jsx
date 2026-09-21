@@ -8,7 +8,7 @@ import {
   VolumeX,
   Send,
   ArrowLeft,
-  Sparkles,
+  Loader2,
   RotateCcw,
   CheckCircle2,
   Bot,
@@ -183,7 +183,7 @@ export function AgentLivePreview() {
                 ) : isListening ? (
                   <Mic size={36} className="text-white" />
                 ) : (
-                  <Sparkles size={36} className="text-white" />
+                  <Bot size={36} className="text-white" />
                 )}
               </div>
             </div>
@@ -245,7 +245,7 @@ export function AgentLivePreview() {
         <div className="chat-stream-card">
           <div className="chat-stream-header">
             <h4>Live Conversation with {agentConfig.name}</h4>
-            <span className="chat-subtag">Every reply speaks out automatically 🔊</span>
+            <span className="chat-subtag flex items-center gap-1"><Volume2 size={12} className="text-purple-500" /> Every reply speaks out automatically</span>
           </div>
 
           {/* Messages Scroll Area */}
@@ -289,7 +289,7 @@ export function AgentLivePreview() {
                 </div>
                 <div className="msg-content-wrapper">
                   <div className="msg-thinking-row">
-                    <Sparkles size={14} className="spin-slow text-emerald-600" />
+                    <Loader2 size={14} className="animate-spin text-emerald-600" />
                     <span>{agentConfig.name} is thinking and formulating voice response...</span>
                   </div>
                 </div>

@@ -5,7 +5,6 @@ import {
   Mic,
   Volume2,
   Radio,
-  Sparkles,
   Sliders,
   Play,
   Pause,

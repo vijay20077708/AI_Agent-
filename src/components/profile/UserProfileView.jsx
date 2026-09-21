@@ -5,7 +5,6 @@ import {
   Mail,
   Briefcase,
   ShieldCheck,
-  Sparkles,
   ArrowLeft,
   CheckCircle2,
   Save,
@@ -115,7 +114,6 @@ export function UserProfileView() {
           <div className="flex items-center gap-2.5 flex-wrap">
             <h1 className="profile-header-name">{userProfile.name}</h1>
             <span className="profile-pro-chip">
-              <Sparkles size={12} className="text-amber-500" />
               <span>{userProfile.plan || 'Pro Plan'}</span>
             </span>
           </div>
@@ -193,7 +191,7 @@ export function UserProfileView() {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 flex items-center justify-center font-bold">
-                  <Sparkles size={16} />
+                  <ShieldCheck size={16} />
                 </div>
                 <h4 className="font-bold text-sm text-gray-900 dark:text-white">Thamili AI Pro</h4>
               </div>

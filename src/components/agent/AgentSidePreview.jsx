@@ -3,6 +3,7 @@ import { useAgent } from '../../context/AgentContext';
 import { DOMAINS } from '../../data/domains';
 import robotAvatarImg from '../../assets/robot-assistant.png';
 import { RobotSpeechDialog } from '../agent-preview/RobotSpeechDialog';
+import { AgentAvatar } from './AgentAvatar';
 import {
   X,
   Mic,
@@ -10,7 +11,7 @@ import {
   Volume2,
   VolumeX,
   Send,
-  Sparkles,
+  Loader2,
   User,
   BrainCircuit,
   Wrench,
@@ -175,13 +176,13 @@ export function AgentSidePreview() {
         <div className="centered-modal-header">
           <div className="flex items-center gap-3">
             <div className="side-avatar-circle" style={{ background: agentConfig.avatarBg || '#6366F1' }}>
-              <span>{agentConfig.avatar || '🤖'}</span>
+              <AgentAvatar avatar={agentConfig.avatar} domain={agentConfig.domain} size={20} />
             </div>
             <div>
               <h3 className="side-agent-name mb-0">{agentConfig.name}</h3>
             </div>
             <span className="modal-mode-badge">
-              {isVoiceOnly ? '🎙️ Voice Only Call' : isTextOnly ? '💬 Text Only' : '🎙️💬 Voice & Text'}
+              {isVoiceOnly ? 'Voice Only Call' : isTextOnly ? 'Text Only' : 'Voice & Text'}
             </span>
           </div>
 
@@ -215,12 +216,12 @@ export function AgentSidePreview() {
               <span className={`robot-live-dot ${isSpeaking ? 'speaking' : isListening ? 'listening' : isThinking ? 'thinking' : 'ready'}`} />
               <span className="robot-status-text">
                 {isSpeaking
-                  ? `🤖 ${agentConfig.name} is speaking...`
+                  ? `${agentConfig.name} is speaking...`
                   : isListening
-                  ? '🎙️ Listening to you... Speak now'
+                  ? 'Listening to you... Speak now'
                   : isThinking
-                  ? '🧠 Thinking & generating voice...'
-                  : '🤖 AI Robot Ready • Live'}
+                  ? 'Thinking & processing...'
+                  : 'AI Agent Ready • Live'}
               </span>
             </div>
 
@@ -247,7 +248,7 @@ export function AgentSidePreview() {
                   transform: `perspective(700px) rotateX(${mouseTilt.x}deg) rotateY(${mouseTilt.y}deg)`
                 }}
                 onClick={handleRobotClick}
-                title="Click me to interact! ✨"
+                title="Click me to interact!"
               >
                 {/* Soft Ambient Energy Aura Behind Robot */}
                 <div className={`robot-energy-halo ${isSpeaking ? 'active-glow' : ''} ${isThinking ? 'thinking-glow' : ''}`} />
@@ -387,7 +388,7 @@ export function AgentSidePreview() {
                   </div>
                   <div className="side-msg-bubble robot-speech-bubble-beside">
                     <div className="thinking-row">
-                      <Sparkles size={14} className="spin-slow text-purple-600" />
+                      <Loader2 size={14} className="animate-spin text-purple-600" />
                       <span>{agentConfig.name} is formulating answer & synthesizing speech...</span>
                     </div>
                   </div>

@@ -10,7 +10,7 @@ import {
   Link,
   Plus,
   Layers,
-  Sparkles,
+  Cpu,
   Search
 } from 'lucide-react';
 
@@ -147,7 +147,7 @@ export function KnowledgeUploader() {
         </div>
 
         <div className="k-stat-card">
-          <Sparkles size={18} className="text-emerald-500" />
+          <Cpu size={18} className="text-emerald-500" />
           <div>
             <span className="k-stat-val">~{totalTokens.toLocaleString()}</span>
             <span className="k-stat-label">Estimated Knowledge Tokens</span>

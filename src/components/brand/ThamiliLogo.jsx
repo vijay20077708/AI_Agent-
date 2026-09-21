@@ -38,7 +38,7 @@ export function ThamiliIcon({ size = 38, className = "" }) {
  * Precision Thamili Logo Component
  * Exactly reproduces the branding from the reference image:
  * "தமிழி" with green leaf sprout, "THAMILI" English wordmark,
- * "✦ அனைத்து AI கருவிகளும் ஒரே இடத்தில்! ✦" badge,
+ * "அனைத்து AI கருவிகளும் ஒரே இடத்தில்!" badge,
  * and "TAMIL-FIRST AI COMPANION" subtitle.
  */
 export function ThamiliLogo({
@@ -62,9 +62,7 @@ export function ThamiliLogo({
 
         {/* Feature Badge Pill: அனைத்து AI கருவிகளும் ஒரே இடத்தில்! */}
         <div className="thamili-tagline-badge">
-          <span className="badge-sparkle">✦</span>
           <span>அனைத்து AI கருவிகளும் ஒரே இடத்தில்!</span>
-          <span className="badge-sparkle">✦</span>
         </div>
 
         {/* Subtitle: TAMIL-FIRST AI COMPANION */}

@@ -9,7 +9,7 @@ import {
   TrendingUp,
   Scale,
   Headphones,
-  Sparkles,
+  Bot,
   UploadCloud,
   FileText,
   Trash2,
@@ -33,7 +33,7 @@ const ICON_MAP = {
   TrendingUp,
   Scale,
   Headphones,
-  Sparkles
+  Bot
 };
 
 export function AgentCreatorForm() {
@@ -91,7 +91,6 @@ export function AgentCreatorForm() {
         {/* Form Header */}
         <div className="creator-header">
           <div className="creator-badge-mint">
-            <Sparkles size={14} className="text-emerald-600" />
             <span>AI Agent Builder</span>
           </div>
           <h2 className="creator-title">Create Your Intelligent AI Agent</h2>
@@ -147,7 +146,7 @@ export function AgentCreatorForm() {
 
             <div className="domains-grid">
               {DOMAINS.map((domain) => {
-                const Icon = ICON_MAP[domain.icon] || Sparkles;
+                const Icon = ICON_MAP[domain.icon] || Bot;
                 const isSelected = agentConfig.domain === domain.id;
 
                 return (

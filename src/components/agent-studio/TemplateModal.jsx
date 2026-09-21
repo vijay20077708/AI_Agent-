@@ -3,14 +3,14 @@ import { useAgent } from '../../context/AgentContext';
 import { AGENT_TEMPLATES } from '../../data/templates';
 import {
   X,
-  Sparkles,
+  Bot,
   ArrowRight,
   Stethoscope,
   Code2,
   GraduationCap,
-  Star,
   CheckCircle2
 } from 'lucide-react';
+import { AgentAvatar } from '../agent/AgentAvatar';
 
 export function TemplateModal() {
   const { isTemplateModalOpen, setIsTemplateModalOpen, loadTemplate, agentConfig } = useAgent();
@@ -24,7 +24,7 @@ export function TemplateModal() {
         <div className="modal-header">
           <div className="flex items-center gap-3">
             <div className="modal-icon-badge">
-              <Sparkles size={20} className="text-purple-600" />
+              <Bot size={20} className="text-purple-600" />
             </div>
             <div>
               <h3 className="modal-title">Pre-Built Agent Templates</h3>
@@ -59,7 +59,7 @@ export function TemplateModal() {
                     className="template-avatar-box"
                     style={{ background: tmpl.avatarBg }}
                   >
-                    <span>{tmpl.avatar}</span>
+                    <AgentAvatar avatar={tmpl.avatar} domain={tmpl.domain} size={22} />
                   </div>
                   <span className="template-domain-tag">{tmpl.domain.toUpperCase()}</span>
                 </div>

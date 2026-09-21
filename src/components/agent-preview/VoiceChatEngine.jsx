@@ -9,7 +9,7 @@ import {
   Radio,
   PhoneCall,
   PhoneOff,
-  Sparkles,
+  Cpu,
   Zap,
   Activity,
   RotateCcw
@@ -120,7 +120,7 @@ export function VoiceChatEngine() {
       case 'listening':
         return { label: 'Listening to your voice...', color: '#3B82F6', icon: Activity };
       case 'thinking':
-        return { label: 'Reasoning & Tool Execution...', color: '#8B5CF6', icon: Sparkles };
+        return { label: 'Reasoning & Tool Execution...', color: '#8B5CF6', icon: Cpu };
       case 'speaking':
         return { label: 'Agent Speaking (LiveKit Audio)...', color: '#EC4899', icon: Radio };
       default:

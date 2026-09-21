@@ -10,8 +10,7 @@ import {
   Share2,
   CheckCircle,
   Zap,
-  Layers,
-  Sparkles
+  Layers
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 

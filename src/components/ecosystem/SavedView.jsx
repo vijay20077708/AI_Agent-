@@ -3,13 +3,11 @@ import { useAgent } from '../../context/AgentContext';
 import {
   Bookmark,
   Bot,
-  Sparkles,
   Code2,
   FileText,
   Trash2,
   ExternalLink,
   Plus,
-  Star,
   Check
 } from 'lucide-react';
 
@@ -68,7 +66,7 @@ export function SavedView() {
           <div className="flex items-center gap-2 mb-1">
             <span className="eco-badge-tag">Favorites & Bookmarks</span>
           </div>
-          <h2 className="eco-title">🔖 Saved Agents, Prompts & Snippets</h2>
+          <h2 className="eco-title">Saved Agents, Prompts & Snippets</h2>
           <p className="eco-sub">
             Quickly access your pinned domain agents, favorite system prompts, and bookmarked code snippets.
           </p>
@@ -114,14 +112,14 @@ export function SavedView() {
           <div className="history-empty-state">
             <Bookmark size={40} className="text-gray-400 mb-2" />
             <h4>No saved items in this category</h4>
-            <p>Star agents, prompts, or snippets to save them here for quick access.</p>
+            <p>Bookmark agents, prompts, or snippets to save them here for quick access.</p>
           </div>
         ) : (
           filteredItems.map((item) => (
             <div key={item.id} className="saved-card-item">
               <div className="saved-card-top">
                 <div className="flex items-center gap-2">
-                  <Star size={16} className="text-amber-500 fill-amber-500" />
+                  <Bookmark size={16} className="text-amber-500 fill-amber-500" />
                   <span className="saved-category-tag">{item.category.toUpperCase()}</span>
                 </div>
                 <button

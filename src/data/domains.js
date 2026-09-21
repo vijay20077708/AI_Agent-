@@ -160,7 +160,7 @@ export const DOMAINS = [
   {
     id: 'custom',
     name: 'Custom / Multi-Agent',
-    icon: 'Sparkles',
+    icon: 'Cpu',
     tag: 'Bespoke AI',
     color: '#6366F1',
     description: 'Design a bespoke AI agent with tailored instructions for your custom requirements.',

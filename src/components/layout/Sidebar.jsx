@@ -7,7 +7,6 @@ import {
   History,
   User,
   LogOut,
-  Sparkles,
   CheckCircle2,
   Clock,
   Plus,
@@ -144,7 +143,6 @@ export function Sidebar() {
           <div className="sidebar-pro-tab-card animate-fadeIn">
             <div className="sidebar-pro-tab-header">
               <div className="flex items-center gap-1.5 font-bold text-xs text-blue-600 dark:text-blue-400">
-                <Sparkles size={14} className="text-amber-500 animate-pulse" />
                 <span>Thamili AI Pro</span>
               </div>
               <span className="sidebar-pro-tab-timer" title={`${proSecondsLeft}s remaining before moving to profile`}>
@@ -193,7 +191,7 @@ export function Sidebar() {
             <div className="profile-modal-header">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 flex items-center justify-center font-bold">
-                  <Sparkles size={20} className="text-blue-600" />
+                  <Bot size={20} className="text-blue-600" />
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-gray-900 dark:text-white">Thamili AI Pro</h3>

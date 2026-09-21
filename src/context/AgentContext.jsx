@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { DEFAULT_AGENTS } from '../data/defaultAgents';
 import { DOMAINS } from '../data/domains';
 import { VOICE_PERSONAS } from '../data/voices';
+import { askAI } from '../services/aiService';
 
 const PATH_TO_VIEW = {
   '/': 'agent-hub',
@@ -57,7 +58,7 @@ const DEFAULT_INITIAL_AGENT_HISTORY = [
     name: 'Grand Aurora Hotel Concierge',
     role: 'Front Desk Hospitality & Guest Services Specialist',
     domain: 'hotel',
-    avatar: '🏨',
+    avatar: 'hotel',
     avatarBg: 'linear-gradient(135deg, #10B981, #059669)',
     voiceId: 'shimmer',
     voiceName: 'Shimmer (Female)',
@@ -70,7 +71,7 @@ const DEFAULT_INITIAL_AGENT_HISTORY = [
     name: 'VoyageAI Bali Travel Guide',
     role: 'Smart Travel Itinerary & Flight Assistant',
     domain: 'travel',
-    avatar: '✈️',
+    avatar: 'travel',
     avatarBg: 'linear-gradient(135deg, #3B82F6, #2563EB)',
     voiceId: 'alloy',
     voiceName: 'Alloy (Male)',
@@ -165,7 +166,7 @@ export function AgentProvider({ children }) {
     name: 'Thamili 3D AI Robot',
     role: 'AI Agent Platform Specialist & Guide',
     domain: 'platform',
-    avatar: '🤖',
+    avatar: 'bot',
     avatarBg: 'linear-gradient(135deg, #6366F1, #3B82F6)',
     voiceId: 'shimmer',
     voiceName: 'Shimmer (Female)',
@@ -189,7 +190,7 @@ export function AgentProvider({ children }) {
     ]
   };
 
-  const DEFAULT_ROBOT_WELCOME = `👋 Welcome to **Thamili 3D AI Robot**! How can I help you?`;
+  const DEFAULT_ROBOT_WELCOME = `Welcome to **Thamili 3D AI Robot**! How can I help you?`;
 
   const DEFAULT_ROBOT_SPOKEN_INTRO = `Welcome to Thamili 3D AI Robot! How can I help you today?`;
 
@@ -276,7 +277,7 @@ export function AgentProvider({ children }) {
         domain: domainId,
         name: shouldKeepName ? prev.name : domainObj.defaultName,
         role: shouldKeepRole ? prev.role : domainObj.defaultRole,
-        avatar: domainId === 'hotel' ? '🏨' : domainId === 'travel' ? '✈️' : domainId === 'study' ? '🎓' : domainId === 'code' ? '💻' : domainId === 'medical' ? '🩺' : domainId === 'research' ? '🔬' : domainId === 'finance' ? '📈' : '✨'
+        avatar: domainId || 'bot'
       };
       agentConfigRef.current = updated;
       return updated;
@@ -438,7 +439,7 @@ export function AgentProvider({ children }) {
   };
 
   // Send message in preview chat & reply with text and/or voice based on mode
-  const sendMessage = (userText) => {
+  const sendMessage = async (userText) => {
     if (!userText.trim()) return;
 
     const userMsg = {
@@ -451,8 +452,40 @@ export function AgentProvider({ children }) {
     setMessages(prev => [...prev, userMsg]);
     setIsThinking(true);
 
+    const activeConfig = agentConfigRef.current;
+
+    // 1. Attempt to call AI service (Backend /api/chat with direct Gemini & Live Weather fallback)
+    try {
+      const data = await askAI({
+        message: userText,
+        agentConfig: activeConfig,
+        history: messages.slice(-6)
+      });
+
+      if (data && data.reply) {
+        const agentMsg = {
+          id: 'msg-a-' + Date.now(),
+          sender: 'agent',
+          text: data.reply,
+          toolBadge: data.toolBadge || 'Gemini 3.6 Flash',
+          weather: data.weather || null,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+
+        setIsThinking(false);
+        setMessages(prev => [...prev, agentMsg]);
+
+        if (activeConfig.interactionMode !== 'text-only') {
+          speakText(data.reply, activeConfig.voiceId);
+        }
+        return;
+      }
+    } catch (apiErr) {
+      console.warn('AI service error, falling back to local simulated response:', apiErr);
+    }
+
+    // 2. Fallback to local simulator if backend is offline or unconfigured
     setTimeout(() => {
-      const activeConfig = agentConfigRef.current;
       const domain = activeConfig.domain;
       const domainObj = DOMAINS.find(d => d.id === domain) || DOMAINS[0];
       const userLower = userText.toLowerCase().trim();
@@ -499,7 +532,7 @@ export function AgentProvider({ children }) {
         userLower.includes('purposes') ||
         userLower.includes('domains')
       ) {
-        replyText = `You can use Thamili AI agents across 8 major domains: 🏨 Hotel & Hospitality concierge, ✈️ Travel & Tour planning, 🎓 STEM & Education tutoring, 💻 Software Coding & Architecture, 🩺 Clinical Healthcare FAQs, 📈 Finance & Trading, ⚖️ Legal & Compliance, and 🎧 24/7 Customer Support.`;
+        replyText = `You can use Thamili AI agents across 8 major domains: Hotel & Hospitality concierge, Travel & Tour planning, STEM & Education tutoring, Software Coding & Architecture, Clinical Healthcare FAQs, Finance & Trading, Legal & Compliance, and 24/7 Customer Support.`;
         toolBadge = 'Domain Knowledge Bases';
       } else if (
         userLower.includes('create') ||
@@ -507,7 +540,7 @@ export function AgentProvider({ children }) {
         userLower.includes('build') ||
         userLower.includes('how do i')
       ) {
-        replyText = `To create your custom agent, click 'Create Agent' on the home screen. Enter your agent's name and role, expand any of the dropdown sections using the arrow buttons to choose your domain, interaction mode (Text, Voice, or Both), tools, documents, and voice persona, then click 'Create Agent & Open Side Preview'!`;
+        replyText = `To create your custom agent, click 'Create Agent' on the home screen. Enter your agent's name and role, expand any of the dropdown sections using the arrow buttons to choose your domain, interaction mode (Text, Voice, or Both), tools, documents, and voice persona, then click 'Launch'!`;
         toolBadge = 'Agent Creation Guide';
       } else if (
         userLower.includes('voice') ||
@@ -618,7 +651,7 @@ export function AgentProvider({ children }) {
 
     const domainObj = DOMAINS.find(d => d.id === finalConfig.domain) || DOMAINS[0];
     // Clean, short welcome greeting and spoken intro
-    const welcomeGreeting = `👋 Welcome to **${finalConfig.name}**! How can I help you?`;
+    const welcomeGreeting = `Welcome to **${finalConfig.name}**! How can I help you?`;
     const spokenIntro = `Welcome to ${finalConfig.name}! How can I help you?`;
 
     setMessages([
@@ -676,7 +709,7 @@ export function AgentProvider({ children }) {
     });
 
     // Clean, short welcome greeting and spoken intro
-    const welcomeGreeting = `👋 Welcome to **${finalName}**! How can I help you?`;
+    const welcomeGreeting = `Welcome to **${finalName}**! How can I help you?`;
     const spokenIntro = `Welcome to ${finalName}! How can I help you?`;
 
     setMessages([
@@ -705,7 +738,7 @@ export function AgentProvider({ children }) {
     setAgentConfig(config);
     agentConfigRef.current = config;
 
-    const welcomeGreeting = `👋 Welcome back to **${historyAgent.name}**! How can I help you?`;
+    const welcomeGreeting = `Welcome back to **${historyAgent.name}**! How can I help you?`;
     const spokenIntro = `Welcome back to ${historyAgent.name}! How can I help you?`;
 
     setMessages([

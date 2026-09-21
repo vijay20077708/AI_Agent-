@@ -3,7 +3,7 @@ import { useAgent } from '../../context/AgentContext';
 import { DOMAINS } from '../../data/domains';
 import {
   Send,
-  Sparkles,
+  Loader2,
   RotateCcw,
   Paperclip,
   Globe,
@@ -156,7 +156,7 @@ export function ChatSandbox() {
             </div>
             <div className="msg-bubble-content">
               <div className="msg-thinking-loader">
-                <Sparkles size={14} className="spin-slow text-purple-500" />
+                <Loader2 size={14} className="animate-spin text-purple-500" />
                 <span>{agentConfig.name} is evaluating context and tools...</span>
               </div>
             </div>

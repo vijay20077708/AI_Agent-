@@ -7,7 +7,6 @@ import {
   Check,
   Download,
   Terminal,
-  Sparkles,
   Zap,
   RotateCcw,
   Bot,
@@ -227,7 +226,7 @@ export async function executeAgentWorkflow() {
               className="aurqo-input-field mb-3"
             />
             <button type="submit" disabled={!prompt.trim() || isRunning} className="btn-create-agent-submit">
-              <Sparkles size={16} />
+              <Code2 size={16} />
               <span>Generate Clean Code</span>
             </button>
           </form>

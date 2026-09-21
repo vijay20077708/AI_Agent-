@@ -5,7 +5,6 @@ import {
   FileText,
   Sliders,
   RotateCcw,
-  Sparkles,
   MessageCircle,
   HelpCircle,
   CheckCircle,

@@ -5,7 +5,7 @@ import {
   FileText,
   Mic,
   Globe,
-  Sparkles,
+  FileEdit,
   Database,
   Languages,
   Code2,
@@ -47,7 +47,7 @@ const ECOSYSTEM_TOOLS = [
   {
     id: 'prompt-optimizer',
     name: 'System Prompt Optimizer',
-    icon: Sparkles,
+    icon: FileEdit,
     badge: 'AI Refiner',
     color: '#EC4899',
     desc: 'Transform simple ideas into bulletproof few-shot system prompts with chain-of-thought and guardrails.',

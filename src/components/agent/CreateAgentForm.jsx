@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useAgent } from '../../context/AgentContext';
 import { DOMAINS } from '../../data/domains';
 import { VOICE_PERSONAS } from '../../data/voices';
+import { AgentAvatar } from './AgentAvatar';
 import {
   ArrowLeft,
   UploadCloud,
@@ -17,9 +18,10 @@ import {
   Pause,
   Check,
   ArrowRight,
-  Sparkles,
+  Cpu,
   User,
   MessageSquare,
+  Mic,
   Wrench,
   Hotel,
   Plane,
@@ -30,7 +32,12 @@ import {
   TrendingUp,
   Lock,
   CheckCircle2,
-  ChevronDown
+  ChevronDown,
+  Key,
+  X,
+  Copy,
+  ShieldCheck,
+  RefreshCw
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -42,7 +49,7 @@ const ICON_MAP = {
   Stethoscope,
   BookOpenCheck,
   TrendingUp,
-  Sparkles
+  Cpu
 };
 
 export function CreateAgentForm() {
@@ -53,7 +60,8 @@ export function CreateAgentForm() {
     addFiles,
     removeFile,
     launchCreatedAgent,
-    setCurrentView
+    setCurrentView,
+    agentHistory
   } = useAgent();
 
   // Active step: 1: Identity & Domain | 2: Voice & Interaction | 3: Tools & Knowledge
@@ -65,6 +73,55 @@ export function CreateAgentForm() {
   });
   const [stepWarning, setStepWarning] = useState(null);
   const [isDomainDropdownOpen, setIsDomainDropdownOpen] = useState(false);
+
+  // Track if current agent has been launched and previewed in studio
+  const [unlockedAgentName, setUnlockedAgentName] = useState(null);
+
+  // Agent API Key unlocks ONLY once the user launches this agent in the studio session
+  const isAgentUnlocked = Boolean(
+    unlockedAgentName &&
+    unlockedAgentName.trim().toLowerCase() === (agentConfig.name || '').trim().toLowerCase()
+  );
+
+  // Generate API Key Modal State
+  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
+  const [customApiKey, setCustomApiKey] = useState('');
+  const [copiedApiKey, setCopiedApiKey] = useState(false);
+
+  const handleOpenApiKeyModal = () => {
+    if (!isAgentUnlocked) {
+      setStepWarning('🔒 Please click Launch first! Generate API Key unlocks once the agent is launched and previewed.');
+      setTimeout(() => setStepWarning(null), 4000);
+      return;
+    }
+    const agentSlug = (agentConfig.name || 'custom_agent').toLowerCase().replace(/[^a-z0-9]+/g, '_');
+    if (!customApiKey || !customApiKey.includes(agentSlug)) {
+      const randHex = Math.random().toString(36).substring(2, 8) + Math.random().toString(36).substring(2, 6);
+      setCustomApiKey(`thk_live_${agentSlug}_${randHex}`);
+    }
+    setIsApiKeyModalOpen(true);
+    setCopiedApiKey(false);
+  };
+
+  const handleCloseApiKeyModal = () => {
+    setIsApiKeyModalOpen(false);
+    setCopiedApiKey(false);
+  };
+
+  const handleCopyApiKey = (keyToCopy) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(keyToCopy);
+      setCopiedApiKey(true);
+      setTimeout(() => setCopiedApiKey(false), 2000);
+    }
+  };
+
+  const handleRegenerateApiKey = () => {
+    const randHex = Math.random().toString(36).substring(2, 8) + Math.random().toString(36).substring(2, 6);
+    const agentSlug = (agentConfig.name || 'custom_agent').toLowerCase().replace(/[^a-z0-9]+/g, '_');
+    setCustomApiKey(`thk_live_${agentSlug}_${randHex}`);
+    setCopiedApiKey(false);
+  };
 
   const [isDragOver, setIsDragOver] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(null);
@@ -208,6 +265,7 @@ export function CreateAgentForm() {
       origin: { y: 0.35 },
       colors: ['#3B82F6', '#8B5CF6', '#EC4899', '#10B981']
     });
+    setUnlockedAgentName(agentConfig.name?.trim() || 'custom_agent');
     launchCreatedAgent(agentConfig);
   };
 
@@ -246,13 +304,6 @@ export function CreateAgentForm() {
             <ArrowLeft size={16} />
             <span>Back to Agent Options</span>
           </button>
-
-          <div className="studio-top-actions">
-            <div className="badge-creation-mode">
-              <Sparkles size={14} className="text-purple-600" />
-              <span>AI Agent Studio</span>
-            </div>
-          </div>
         </div>
 
         {/* Page Main Headline & Stepper Bar */}
@@ -402,7 +453,6 @@ export function CreateAgentForm() {
                           onClick={handleApplyDomainDefaults}
                           title={`Click to use default: ${currentDomainObj.defaultName}`}
                         >
-                          <Sparkles size={12} />
                           <span>Suggest for {currentDomainObj.name}: <strong>{currentDomainObj.defaultName}</strong></span>
                         </button>
                       </div>
@@ -446,7 +496,7 @@ export function CreateAgentForm() {
                       <div className="flex items-center gap-3 overflow-hidden">
                         <div className="domain-dropdown-icon-wrap" style={{ color: currentDomainObj.color }}>
                           {(() => {
-                            const CurrIcon = ICON_MAP[currentDomainObj.icon] || Sparkles;
+                            const CurrIcon = ICON_MAP[currentDomainObj.icon] || Cpu;
                             return <CurrIcon size={20} />;
                           })()}
                         </div>
@@ -473,7 +523,7 @@ export function CreateAgentForm() {
                     {isDomainDropdownOpen && (
                       <div className="domain-dropdown-menu-list animate-fadeIn">
                         {DOMAINS.map((domain) => {
-                          const Icon = ICON_MAP[domain.icon] || Sparkles;
+                          const Icon = ICON_MAP[domain.icon] || Cpu;
                           const isSelected = agentConfig.domain === domain.id;
 
                           return (
@@ -552,7 +602,10 @@ export function CreateAgentForm() {
                       onClick={() => updateAgentField('interactionMode', 'both')}
                     >
                       <div className="flex items-center justify-between mb-1.5">
-                        <span className="mode-emoji">🎙️💬</span>
+                        <div className="flex items-center gap-1 text-purple-600 dark:text-purple-400">
+                          <Mic size={15} />
+                          <MessageSquare size={14} />
+                        </div>
                         <span className="badge-rec-tiny">Recommended</span>
                       </div>
                       <h4 className="mode-title-text">Both Voice & Text</h4>
@@ -566,7 +619,9 @@ export function CreateAgentForm() {
                       onClick={() => updateAgentField('interactionMode', 'text-only')}
                     >
                       <div className="flex items-center justify-between mb-1.5">
-                        <span className="mode-emoji">💬</span>
+                        <div className="text-blue-600 dark:text-blue-400">
+                          <MessageSquare size={15} />
+                        </div>
                         {agentConfig.interactionMode === 'text-only' && <Check size={14} className="text-blue-600" />}
                       </div>
                       <h4 className="mode-title-text">Text Message Only</h4>
@@ -580,7 +635,9 @@ export function CreateAgentForm() {
                       onClick={() => updateAgentField('interactionMode', 'voice-only')}
                     >
                       <div className="flex items-center justify-between mb-1.5">
-                        <span className="mode-emoji">🎙️</span>
+                        <div className="text-emerald-600 dark:text-emerald-400">
+                          <Mic size={15} />
+                        </div>
                         {agentConfig.interactionMode === 'voice-only' && <Check size={14} className="text-blue-600" />}
                       </div>
                       <h4 className="mode-title-text">Voice Only (Call)</h4>
@@ -618,7 +675,9 @@ export function CreateAgentForm() {
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2.5">
-                              <span className="text-base">{persona.avatar}</span>
+                              <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 flex items-center justify-center font-bold text-xs flex-shrink-0">
+                                <Mic size={14} />
+                              </div>
                               <div>
                                 <div className="flex items-center gap-1.5">
                                   <h4 className="voice-compact-name">{persona.name}</h4>
@@ -862,14 +921,34 @@ export function CreateAgentForm() {
                     <ArrowLeft size={16} />
                     <span>Back to Step 2</span>
                   </button>
-                  <button
-                    type="submit"
-                    className="btn-studio-launch"
-                    onClick={() => setCompletedSteps((prev) => ({ ...prev, 3: true }))}
-                  >
-                    <span>Create Agent & Open Side Preview</span>
-                    <Sparkles size={16} />
-                  </button>
+
+                  <div className="studio-step-footer-actions">
+                    <button
+                      type="button"
+                      onClick={handleOpenApiKeyModal}
+                      className={`btn-studio-generate-key ${isAgentUnlocked ? 'unlocked' : 'locked'}`}
+                      title={
+                        isAgentUnlocked
+                          ? 'Generate API Key to use this agent externally'
+                          : '🔒 Locked — Click Launch to preview agent and unlock API Key'
+                      }
+                    >
+                      {isAgentUnlocked ? (
+                        <Key size={14} className="api-key-btn-icon" />
+                      ) : (
+                        <Lock size={13} className="api-key-btn-icon-locked" />
+                      )}
+                      <span>Generate API Key</span>
+                      {!isAgentUnlocked && <span className="btn-locked-tag">Locked</span>}
+                    </button>
+                    <button
+                      type="submit"
+                      className="btn-studio-launch"
+                      onClick={() => setCompletedSteps((prev) => ({ ...prev, 3: true }))}
+                    >
+                      <span>Launch</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -887,13 +966,7 @@ export function CreateAgentForm() {
               {/* Agent Identity Showcase */}
               <div className="preview-identity-hero">
                 <div className="preview-avatar-circle">
-                  <span className="preview-avatar-icon">
-                    {currentDomainObj?.icon && ICON_MAP[currentDomainObj.icon] ? (
-                      React.createElement(ICON_MAP[currentDomainObj.icon], { size: 24 })
-                    ) : (
-                      '🤖'
-                    )}
-                  </span>
+                  <AgentAvatar avatar={agentConfig.avatar} domain={agentConfig.domain} size={26} />
                 </div>
                 <h3 className="preview-agent-name">
                   {agentConfig.name?.trim() || 'Untitled Agent'}
@@ -908,10 +981,10 @@ export function CreateAgentForm() {
                   </span>
                   <span className="preview-mode-badge">
                     {agentConfig.interactionMode === 'text-only'
-                      ? '💬 Text Only'
+                      ? 'Text Only'
                       : agentConfig.interactionMode === 'voice-only'
-                      ? '🎙️ Voice Only'
-                      : '🎙️💬 Hybrid'}
+                      ? 'Voice Only'
+                      : 'Hybrid (Voice & Text)'}
                   </span>
                 </div>
               </div>
@@ -925,8 +998,8 @@ export function CreateAgentForm() {
                     <span className="spec-label">Voice:</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className="spec-value">
-                      {currentVoiceObj.avatar} {currentVoiceObj.name}
+                    <span className="spec-value flex items-center gap-1">
+                      <Volume2 size={12} className="text-purple-500" /> {currentVoiceObj.name}
                     </span>
                     <button
                       type="button"
@@ -946,10 +1019,10 @@ export function CreateAgentForm() {
                     <span className="spec-label">Tools:</span>
                   </div>
                   <div className="spec-tools-chips">
-                    {agentConfig.tools?.webSearch && <span className="spec-tool-pill">🌐 Search</span>}
-                    {agentConfig.tools?.codeInterpreter && <span className="spec-tool-pill">💻 Code</span>}
-                    {agentConfig.tools?.imageGen && <span className="spec-tool-pill">🎨 Image</span>}
-                    {agentConfig.tools?.knowledgeSearch && <span className="spec-tool-pill">📚 Docs</span>}
+                    {agentConfig.tools?.webSearch && <span className="spec-tool-pill">Search</span>}
+                    {agentConfig.tools?.codeInterpreter && <span className="spec-tool-pill">Code</span>}
+                    {agentConfig.tools?.imageGen && <span className="spec-tool-pill">Image</span>}
+                    {agentConfig.tools?.knowledgeSearch && <span className="spec-tool-pill">Docs</span>}
                     {activeToolsCount === 0 && <span className="text-xs text-sub">None</span>}
                   </div>
                 </div>
@@ -972,7 +1045,7 @@ export function CreateAgentForm() {
                     <span className="spec-label">Memory:</span>
                   </div>
                   <span className="spec-value">
-                    {agentConfig.memorySaving ? '🧠 Active' : 'Off'}
+                    {agentConfig.memorySaving ? 'Active' : 'Off'}
                   </span>
                 </div>
               </div>
@@ -992,12 +1065,147 @@ export function CreateAgentForm() {
                 className="btn-preview-launch"
               >
                 <span>Launch Agent Now</span>
-                <Sparkles size={16} />
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Generate API Key Modal Popup */}
+      {isApiKeyModalOpen && (
+        <div className="modal-backdrop-overlay" onClick={handleCloseApiKeyModal}>
+          <div
+            className="api-key-modal-card animate-modalZoom"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="api-key-modal-header">
+              <div className="api-key-modal-title-wrap">
+                <div className="api-key-icon-badge">
+                  <Key size={20} />
+                </div>
+                <div>
+                  <h3 className="api-key-modal-title">Generate API Key</h3>
+                  <p className="api-key-modal-subtitle">
+                    API access credentials for <strong>{agentConfig.name?.trim() || 'Thamili AI Agent'}</strong>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn-modal-close"
+                onClick={handleCloseApiKeyModal}
+                aria-label="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="api-key-modal-body">
+              {/* Agent Card Summary */}
+              <div className="api-key-agent-summary">
+                <div className="api-key-agent-avatar-box">
+                  <AgentAvatar avatar={agentConfig.avatar} domain={agentConfig.domain} size={22} />
+                </div>
+                <div className="api-key-agent-info">
+                  <div className="api-key-agent-title-row">
+                    <span className="api-key-agent-name">
+                      {agentConfig.name?.trim() || 'Thamili AI Agent'}
+                    </span>
+                    <span className={`agent-domain-pill ${agentConfig.domain || 'hotel'}`}>
+                      {(agentConfig.domain || 'custom').toUpperCase()}
+                    </span>
+                  </div>
+                  <p className="api-key-agent-desc">
+                    {agentConfig.role?.trim() || 'AI Platform Specialist & Assistant'}
+                  </p>
+                </div>
+              </div>
+
+              {/* API Key Box */}
+              <div className="api-key-box-section">
+                <div className="api-key-label-row">
+                  <label className="api-key-label">Secret API Key</label>
+                  <span className="api-key-live-pill">Active</span>
+                </div>
+                <div className="api-key-input-row">
+                  <input
+                    type="text"
+                    readOnly
+                    value={customApiKey}
+                    className="api-key-display-input font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleCopyApiKey(customApiKey)}
+                    className={`btn-api-key-copy ${copiedApiKey ? 'copied' : ''}`}
+                    title="Copy API Key"
+                  >
+                    {copiedApiKey ? (
+                      <>
+                        <Check size={14} className="text-emerald-500" />
+                        <span>Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={14} />
+                        <span>Copy</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+                <p className="api-key-hint-note">
+                  Anyone can use this secret key to query this agent via REST API or LiveKit WebRTC SDK.
+                </p>
+              </div>
+
+              {/* API Endpoint Preview */}
+              <div className="api-key-endpoint-box">
+                <label className="api-key-label">REST API Endpoint</label>
+                <div className="api-key-endpoint-display font-mono">
+                  <span className="endpoint-method">POST</span>
+                  <span className="endpoint-url">
+                    https://api.thamili.ai/v1/agents/{(agentConfig.name || 'agent').toLowerCase().replace(/[^a-z0-9]+/g, '-')}/chat
+                  </span>
+                </div>
+              </div>
+
+              {/* Placeholder Notice for Future Details */}
+              <div className="api-key-placeholder-box">
+                <div className="api-key-placeholder-icon">
+                  <ShieldCheck size={18} />
+                </div>
+                <div className="api-key-placeholder-text">
+                  <div className="api-key-placeholder-heading">Custom Details Placeholder</div>
+                  <p>
+                    Ungalukku intha pop-up la enna details (rate limits, webhooks, authentication scopes, allowed domains) venumo atha solrappo inge easily add seithu kollalaam.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="api-key-modal-footer">
+              <button
+                type="button"
+                onClick={handleRegenerateApiKey}
+                className="btn-api-key-regen"
+              >
+                <RefreshCw size={14} />
+                <span>Regenerate Key</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleCloseApiKeyModal}
+                className="btn-api-key-done"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

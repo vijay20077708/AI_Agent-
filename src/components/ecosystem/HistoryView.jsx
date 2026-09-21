@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAgent } from '../../context/AgentContext';
+import { AgentAvatar } from '../agent/AgentAvatar';
 import {
   Bot,
   Trash2,
@@ -9,7 +10,13 @@ import {
   Plus,
   Volume2,
   Wrench,
-  Users
+  Users,
+  Key,
+  X,
+  Copy,
+  Check,
+  RefreshCw,
+  ShieldCheck
 } from 'lucide-react';
 
 export function HistoryView() {
@@ -23,6 +30,47 @@ export function HistoryView() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all'); // 'all' | 'created' | 'chosen'
+
+  // Generate API Key Modal State
+  const [apiKeyModalAgent, setApiKeyModalAgent] = useState(null);
+  const [agentApiKeys, setAgentApiKeys] = useState({});
+  const [copiedKey, setCopiedKey] = useState(false);
+
+  const handleOpenApiKeyModal = (agent) => {
+    if (!agentApiKeys[agent.id]) {
+      const randHex = Math.random().toString(36).substring(2, 8) + Math.random().toString(36).substring(2, 6);
+      const agentSlug = (agent.name || 'agent').toLowerCase().replace(/[^a-z0-9]+/g, '_');
+      setAgentApiKeys((prev) => ({
+        ...prev,
+        [agent.id]: `thk_live_${agentSlug}_${randHex}`
+      }));
+    }
+    setApiKeyModalAgent(agent);
+    setCopiedKey(false);
+  };
+
+  const handleCloseApiKeyModal = () => {
+    setApiKeyModalAgent(null);
+    setCopiedKey(false);
+  };
+
+  const handleCopyApiKey = (keyToCopy) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(keyToCopy);
+      setCopiedKey(true);
+      setTimeout(() => setCopiedKey(false), 2000);
+    }
+  };
+
+  const handleRegenerateApiKey = (agentId, agentName) => {
+    const randHex = Math.random().toString(36).substring(2, 8) + Math.random().toString(36).substring(2, 6);
+    const agentSlug = (agentName || 'agent').toLowerCase().replace(/[^a-z0-9]+/g, '_');
+    setAgentApiKeys((prev) => ({
+      ...prev,
+      [agentId]: `thk_live_${agentSlug}_${randHex}`
+    }));
+    setCopiedKey(false);
+  };
 
   const filteredAgents = agentHistory.filter((agent) => {
     const matchesType = filterType === 'all' || agent.type === filterType;
@@ -69,7 +117,7 @@ export function HistoryView() {
               Agent Launch Log
             </span>
           </div>
-          <h2 className="eco-title">🕒 My Agent History</h2>
+          <h2 className="eco-title">My Agent History</h2>
           <p className="eco-sub">
             All the AI agents you have created or chosen and launched are saved here. Click any agent to instantly resume your session.
           </p>
@@ -163,12 +211,12 @@ export function HistoryView() {
                     className="history-agent-avatar"
                     style={{ background: agent.avatarBg || 'linear-gradient(135deg, #6366F1, #4F46E5)' }}
                   >
-                    <span>{agent.avatar || '🤖'}</span>
+                    <AgentAvatar avatar={agent.avatar} domain={agent.domain} size={22} />
                   </div>
 
                   <div className="history-agent-badges">
                     <span className={`history-origin-pill ${isCreated ? 'created-pill' : 'chosen-pill'}`}>
-                      {isCreated ? '✨ Created' : '⚡ Chosen'}
+                      {isCreated ? 'Created' : 'Template'}
                     </span>
                     <span className="history-domain-tag">
                       {agent.domain ? agent.domain.toUpperCase() : 'GENERAL'}
@@ -194,21 +242,33 @@ export function HistoryView() {
                 </div>
 
                 <div className="history-agent-footer">
-                  <button
-                    onClick={() => handleLaunch(agent)}
-                    className="btn-launch-history-agent"
-                    title={`Open ${agent.name}`}
-                  >
-                    <Play size={14} />
-                    <span>Launch & Chat</span>
-                  </button>
+                  <div className="history-agent-footer-top">
+                    <button
+                      onClick={() => handleLaunch(agent)}
+                      className="btn-launch-history-agent"
+                      title={`Open ${agent.name}`}
+                    >
+                      <Play size={13} />
+                      <span>Launch & Chat</span>
+                    </button>
+
+                    <button
+                      onClick={() => removeAgentFromHistory(agent.id)}
+                      className="btn-remove-history-agent"
+                      title="Remove from history"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
 
                   <button
-                    onClick={() => removeAgentFromHistory(agent.id)}
-                    className="btn-remove-history-agent"
-                    title="Remove from history"
+                    type="button"
+                    onClick={() => handleOpenApiKeyModal(agent)}
+                    className="btn-history-apikey"
+                    title={`Generate API Key for ${agent.name}`}
                   >
-                    <Trash2 size={15} />
+                    <Key size={13} className="api-key-btn-icon" />
+                    <span>Generate API Key</span>
                   </button>
                 </div>
               </div>
@@ -216,6 +276,149 @@ export function HistoryView() {
           })
         )}
       </div>
+
+      {/* Generate API Key Modal Popup */}
+      {apiKeyModalAgent && (
+        <div className="modal-backdrop-overlay" onClick={handleCloseApiKeyModal}>
+          <div
+            className="api-key-modal-card animate-modalZoom"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="api-key-modal-header">
+              <div className="api-key-modal-title-wrap">
+                <div className="api-key-icon-badge">
+                  <Key size={20} />
+                </div>
+                <div>
+                  <h3 className="api-key-modal-title">Generate API Key</h3>
+                  <p className="api-key-modal-subtitle">
+                    API access credentials for <strong>{apiKeyModalAgent.name}</strong>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn-modal-close"
+                onClick={handleCloseApiKeyModal}
+                aria-label="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="api-key-modal-body">
+              {/* Agent Card Summary */}
+              <div className="api-key-agent-summary">
+                <div
+                  className="api-key-agent-avatar-box"
+                  style={{ background: apiKeyModalAgent.avatarBg || 'linear-gradient(135deg, #6366F1, #4F46E5)' }}
+                >
+                  <AgentAvatar avatar={apiKeyModalAgent.avatar} domain={apiKeyModalAgent.domain} size={22} />
+                </div>
+                <div className="api-key-agent-info">
+                  <div className="api-key-agent-title-row">
+                    <span className="api-key-agent-name">{apiKeyModalAgent.name}</span>
+                    <span className={`agent-domain-pill ${apiKeyModalAgent.domain || 'custom'}`}>
+                      {(apiKeyModalAgent.domain || 'GENERAL').toUpperCase()}
+                    </span>
+                  </div>
+                  <p className="api-key-agent-desc">{apiKeyModalAgent.role}</p>
+                </div>
+              </div>
+
+              {/* API Key Box */}
+              <div className="api-key-box-section">
+                <div className="api-key-label-row">
+                  <label className="api-key-label">Secret API Key</label>
+                  <span className="api-key-live-pill">Active</span>
+                </div>
+                <div className="api-key-input-row">
+                  <input
+                    type="text"
+                    readOnly
+                    value={
+                      agentApiKeys[apiKeyModalAgent.id] ||
+                      `thk_live_${(apiKeyModalAgent.name || 'agent').toLowerCase().replace(/[^a-z0-9]+/g, '_')}_default`
+                    }
+                    className="api-key-display-input font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleCopyApiKey(
+                        agentApiKeys[apiKeyModalAgent.id] ||
+                          `thk_live_${(apiKeyModalAgent.name || 'agent').toLowerCase().replace(/[^a-z0-9]+/g, '_')}_default`
+                      )
+                    }
+                    className={`btn-api-key-copy ${copiedKey ? 'copied' : ''}`}
+                    title="Copy API Key"
+                  >
+                    {copiedKey ? (
+                      <>
+                        <Check size={14} className="text-emerald-500" />
+                        <span>Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={14} />
+                        <span>Copy</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+                <p className="api-key-hint-note">
+                  Anyone can use this secret key to query this agent via REST API or LiveKit WebRTC SDK.
+                </p>
+              </div>
+
+              {/* API Endpoint Preview */}
+              <div className="api-key-endpoint-box">
+                <label className="api-key-label">REST API Endpoint</label>
+                <div className="api-key-endpoint-display font-mono">
+                  <span className="endpoint-method">POST</span>
+                  <span className="endpoint-url">
+                    https://api.thamili.ai/v1/agents/{(apiKeyModalAgent.name || 'agent').toLowerCase().replace(/[^a-z0-9]+/g, '-')}/chat
+                  </span>
+                </div>
+              </div>
+
+              {/* Placeholder Notice for Future Details */}
+              <div className="api-key-placeholder-box">
+                <div className="api-key-placeholder-icon">
+                  <ShieldCheck size={18} />
+                </div>
+                <div className="api-key-placeholder-text">
+                  <div className="api-key-placeholder-heading">Custom Details Placeholder</div>
+                  <p>
+                    Ungalukku intha pop-up la enna details (rate limits, webhooks, authentication scopes, allowed domains) venumo atha solrappo inge easily add seithu kollalaam.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="api-key-modal-footer">
+              <button
+                type="button"
+                onClick={() => handleRegenerateApiKey(apiKeyModalAgent.id, apiKeyModalAgent.name)}
+                className="btn-api-key-regen"
+              >
+                <RefreshCw size={14} />
+                <span>Regenerate Key</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleCloseApiKeyModal}
+                className="btn-api-key-done"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -6,7 +6,6 @@ import {
   Image,
   Video,
   GraduationCap,
-  Sparkles,
   Bot,
   Send,
   Play,
@@ -137,7 +136,7 @@ export function AIImageScreen() {
           />
         </div>
         <button className="btn-primary-gradient mb-4">
-          <Sparkles size={16} /> Generate High-Res Image
+          <Image size={16} /> Generate High-Res Image
         </button>
         <div className="image-gallery-mock">
           <div className="img-placeholder-card p-1">

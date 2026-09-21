@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Volume2, Sparkles, Copy, Check, Wrench, MessageSquareQuote } from 'lucide-react';
+import { Volume2, Loader2, Copy, Check, Wrench, MessageSquareQuote } from 'lucide-react';
 
 /**
  * RobotSpeechDialog:
@@ -79,7 +79,7 @@ export function RobotSpeechDialog({
       <div className="robot-speech-card-body">
         {isThinking ? (
           <div className="robot-dialog-thinking-state">
-            <Sparkles size={16} className="spin-slow text-purple-600" />
+            <Loader2 size={16} className="animate-spin text-purple-600" />
             <span>Formulating answer & synthesizing neural voice...</span>
             <div className="dialog-bouncing-dots">
               <span className="dot dot-1" />

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useAgent } from '../../context/AgentContext';
 import { DEFAULT_AGENTS } from '../../data/defaultAgents';
+import { AgentAvatar } from './AgentAvatar';
 import {
   ArrowLeft,
-  Sparkles,
   ArrowRight,
   ChevronDown,
   ChevronUp,
@@ -13,7 +13,11 @@ import {
   Edit3,
   HelpCircle,
   Copy,
-  Volume2
+  Volume2,
+  Key,
+  X,
+  ShieldCheck,
+  RefreshCw
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -38,11 +42,44 @@ export function ChooseAgentScreen() {
       return acc;
     }, {})
   );
-  const [expandedQuestions, setExpandedQuestions] = useState({
-    'hotel-staff': true // Start with first agent open for instant discovery
-  });
+  const [expandedQuestions, setExpandedQuestions] = useState({});
   const [isEditingQuestions, setIsEditingQuestions] = useState({});
   const [copiedQuestion, setCopiedQuestion] = useState(null);
+
+  // Generate API Key Modal State
+  const [apiKeyModalAgent, setApiKeyModalAgent] = useState(null);
+  const [agentApiKeys, setAgentApiKeys] = useState({});
+  const [copiedApiKey, setCopiedApiKey] = useState(false);
+
+  const handleOpenApiKeyModal = (agent) => {
+    setApiKeyModalAgent(agent);
+    if (!agentApiKeys[agent.id]) {
+      const randHex = Math.random().toString(36).substring(2, 8) + Math.random().toString(36).substring(2, 6);
+      const generated = `thk_live_${agent.id.replace(/-/g, '_')}_${randHex}`;
+      setAgentApiKeys((prev) => ({ ...prev, [agent.id]: generated }));
+    }
+    setCopiedApiKey(false);
+  };
+
+  const handleCloseApiKeyModal = () => {
+    setApiKeyModalAgent(null);
+    setCopiedApiKey(false);
+  };
+
+  const handleCopyApiKey = (keyToCopy) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(keyToCopy);
+      setCopiedApiKey(true);
+      setTimeout(() => setCopiedApiKey(false), 2000);
+    }
+  };
+
+  const handleRegenerateApiKey = (agentId) => {
+    const randHex = Math.random().toString(36).substring(2, 8) + Math.random().toString(36).substring(2, 6);
+    const newKey = `thk_live_${agentId.replace(/-/g, '_')}_${randHex}`;
+    setAgentApiKeys((prev) => ({ ...prev, [agentId]: newKey }));
+    setCopiedApiKey(false);
+  };
 
   const filteredAgents = DEFAULT_AGENTS.filter(
     (agent) => selectedDomainFilter === 'all' || agent.domain === selectedDomainFilter
@@ -152,7 +189,6 @@ export function ChooseAgentScreen() {
             <span>Back to Agent Options</span>
           </button>
           <div className="badge-choose-mode">
-            <Sparkles size={14} className="text-purple-600" />
             <span>Domain Agents</span>
           </div>
         </div>
@@ -169,12 +205,12 @@ export function ChooseAgentScreen() {
         <div className="choose-filter-pills-row">
           {[
             { id: 'all', label: 'All Pre-Built Agents' },
-            { id: 'hotel', label: '🏨 Hospitality & Hotel' },
-            { id: 'travel', label: '✈️ Travel & Tours' },
-            { id: 'study', label: '🎓 STEM & Tutoring' },
-            { id: 'code', label: '💻 Code & Architecture' },
-            { id: 'medical', label: '🩺 Clinical Healthcare' },
-            { id: 'finance', label: '📈 Finance & Markets' }
+            { id: 'hotel', label: 'Hospitality & Hotel' },
+            { id: 'travel', label: 'Travel & Tours' },
+            { id: 'study', label: 'STEM & Tutoring' },
+            { id: 'code', label: 'Code & Architecture' },
+            { id: 'medical', label: 'Clinical Healthcare' },
+            { id: 'finance', label: 'Finance & Markets' }
           ].map((tab) => (
             <button
               key={tab.id}
@@ -206,7 +242,7 @@ export function ChooseAgentScreen() {
                   <div className="agent-card-index-avatar-wrap">
                     <div className="agent-card-index-box">
                       <span className="agent-card-index-num">{indexNumber}</span>
-                      <span className="agent-card-avatar-emoji">{agent.avatar}</span>
+                      <AgentAvatar avatar={agent.avatar} domain={agent.domain} size={20} />
                     </div>
                   </div>
 
@@ -247,7 +283,7 @@ export function ChooseAgentScreen() {
                           className={`agent-mode-mini-pill ${currentMode === 'both' ? 'active' : ''}`}
                           title="Voice & Text Hybrid Mode"
                         >
-                          🎙️💬 Hybrid
+                          Hybrid
                         </button>
                         <button
                           type="button"
@@ -255,7 +291,7 @@ export function ChooseAgentScreen() {
                           className={`agent-mode-mini-pill ${currentMode === 'text-only' ? 'active' : ''}`}
                           title="Text Message Only"
                         >
-                          💬 Text
+                          Text
                         </button>
                         <button
                           type="button"
@@ -263,7 +299,7 @@ export function ChooseAgentScreen() {
                           className={`agent-mode-mini-pill ${currentMode === 'voice-only' ? 'active' : ''}`}
                           title="Voice Only Phone Call"
                         >
-                          🎙️ Voice
+                          Voice
                         </button>
                       </div>
 
@@ -273,11 +309,16 @@ export function ChooseAgentScreen() {
                         <span>Voice: {agent.voiceName || 'Shimmer (Female)'}</span>
                       </div>
 
-                      {/* Prompts Count Pill */}
-                      <div className="agent-card-spec-pill">
-                        <HelpCircle size={13} className="text-blue-600" />
-                        <span>{currentQuestions.length} Prompts</span>
-                      </div>
+                      {/* Generate API Key Button (Replaces 10 Prompts) */}
+                      <button
+                        type="button"
+                        onClick={() => handleOpenApiKeyModal(agent)}
+                        className="btn-agent-generate-key"
+                        title="Generate API Key to use this agent externally"
+                      >
+                        <Key size={13} className="api-key-btn-icon" />
+                        <span>Generate API Key</span>
+                      </button>
                     </div>
                   </div>
 
@@ -311,7 +352,6 @@ export function ChooseAgentScreen() {
                     {/* Drawer Header: Title & Edit Action */}
                     <div className="drawer-header-bar">
                       <div className="drawer-title-group">
-                        <Sparkles size={14} className="text-purple-600" />
                         <span className="drawer-title-text">
                           PRE-CONFIGURED INQUIRY & DISCOVERY QUESTIONS ({currentQuestions.length})
                         </span>
@@ -455,6 +495,146 @@ export function ChooseAgentScreen() {
           })}
         </div>
       </div>
+
+      {/* Generate API Key Modal Popup */}
+      {apiKeyModalAgent && (
+        <div className="modal-backdrop-overlay" onClick={handleCloseApiKeyModal}>
+          <div
+            className="api-key-modal-card animate-modalZoom"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="api-key-modal-header">
+              <div className="api-key-modal-title-wrap">
+                <div className="api-key-icon-badge">
+                  <Key size={20} />
+                </div>
+                <div>
+                  <h3 className="api-key-modal-title">Generate API Key</h3>
+                  <p className="api-key-modal-subtitle">
+                    API access credentials for <strong>{agentNames[apiKeyModalAgent.id] || apiKeyModalAgent.name}</strong>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn-modal-close"
+                onClick={handleCloseApiKeyModal}
+                aria-label="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="api-key-modal-body">
+              {/* Agent Card Summary */}
+              <div className="api-key-agent-summary">
+                <div className="api-key-agent-avatar-box">
+                  <AgentAvatar avatar={apiKeyModalAgent.avatar} domain={apiKeyModalAgent.domain} size={22} />
+                </div>
+                <div className="api-key-agent-info">
+                  <div className="api-key-agent-title-row">
+                    <span className="api-key-agent-name">
+                      {agentNames[apiKeyModalAgent.id] || apiKeyModalAgent.name}
+                    </span>
+                    <span className={`agent-domain-pill ${apiKeyModalAgent.domain}`}>
+                      {apiKeyModalAgent.domain.toUpperCase()}
+                    </span>
+                  </div>
+                  <p className="api-key-agent-desc">{apiKeyModalAgent.role}</p>
+                </div>
+              </div>
+
+              {/* API Key Box */}
+              <div className="api-key-box-section">
+                <div className="api-key-label-row">
+                  <label className="api-key-label">Secret API Key</label>
+                  <span className="api-key-live-pill">Active</span>
+                </div>
+                <div className="api-key-input-row">
+                  <input
+                    type="text"
+                    readOnly
+                    value={
+                      agentApiKeys[apiKeyModalAgent.id] ||
+                      `thk_live_${apiKeyModalAgent.id.replace(/-/g, '_')}_default`
+                    }
+                    className="api-key-display-input font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleCopyApiKey(
+                        agentApiKeys[apiKeyModalAgent.id] ||
+                          `thk_live_${apiKeyModalAgent.id.replace(/-/g, '_')}_default`
+                      )
+                    }
+                    className={`btn-api-key-copy ${copiedApiKey ? 'copied' : ''}`}
+                    title="Copy API Key"
+                  >
+                    {copiedApiKey ? (
+                      <>
+                        <Check size={14} className="text-emerald-500" />
+                        <span>Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={14} />
+                        <span>Copy</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+                <p className="api-key-hint-note">
+                  Anyone can use this secret key to query this agent via REST API or LiveKit WebRTC SDK.
+                </p>
+              </div>
+
+              {/* API Endpoint Preview */}
+              <div className="api-key-endpoint-box">
+                <label className="api-key-label">REST API Endpoint</label>
+                <div className="api-key-endpoint-display font-mono">
+                  <span className="endpoint-method">POST</span>
+                  <span className="endpoint-url">https://api.thamili.ai/v1/agents/{apiKeyModalAgent.id}/chat</span>
+                </div>
+              </div>
+
+              {/* Placeholder Notice for Future Details */}
+              <div className="api-key-placeholder-box">
+                <div className="api-key-placeholder-icon">
+                  <ShieldCheck size={18} />
+                </div>
+                <div className="api-key-placeholder-text">
+                  <div className="api-key-placeholder-heading">Custom Details Placeholder</div>
+                  <p>
+                    Ungalukku intha pop-up la enna details (rate limits, webhooks, authentication scopes, allowed domains) venumo atha solrappo inge easily add seithu kollalaam.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="api-key-modal-footer">
+              <button
+                type="button"
+                onClick={() => handleRegenerateApiKey(apiKeyModalAgent.id)}
+                className="btn-api-key-regen"
+              >
+                <RefreshCw size={14} />
+                <span>Regenerate Key</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleCloseApiKeyModal}
+                className="btn-api-key-done"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

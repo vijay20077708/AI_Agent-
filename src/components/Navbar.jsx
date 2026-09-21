@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAgent } from '../context/AgentContext';
-import { Bot, RotateCcw, ArrowLeft, Sparkles, Activity } from 'lucide-react';
+import { Bot, RotateCcw, ArrowLeft, Activity } from 'lucide-react';
 
 export function Navbar() {
   const { currentScreen, backToCreator, resetForm, agentConfig } = useAgent();

@@ -22,12 +22,6 @@ export function Header() {
             <Moon size={20} className="text-blue-400" />
           )}
         </button>
-
-        {/* Sign In & Get Started Buttons from image */}
-        <div className="auth-buttons-wrap">
-          <button className="btn-signin-ghost">Sign In</button>
-          <button className="btn-getstarted-solid">Get Started</button>
-        </div>
       </div>
     </header>
   );

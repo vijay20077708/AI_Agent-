@@ -23,44 +23,40 @@ export function AgentHub() {
           <div
             className="thamili-hero-card"
             onClick={() => setCurrentView('create-agent')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setCurrentView('create-agent');
+              }
+            }}
           >
             <div className="thamili-hero-icon-circle">
               <Plus size={34} strokeWidth={2.2} />
             </div>
             <h3 className="thamili-hero-title">Create Agent</h3>
             <p className="thamili-hero-subtitle">Build a custom agent</p>
-            <button
-              className="thamili-hero-pill-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                setCurrentView('create-agent');
-              }}
-            >
-              <span>Create</span>
-              <span className="btn-arrow">→</span>
-            </button>
           </div>
 
           {/* Choose Agent Card */}
           <div
             className="thamili-hero-card"
             onClick={() => setCurrentView('choose-agent')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setCurrentView('choose-agent');
+              }
+            }}
           >
             <div className="thamili-hero-icon-circle">
               <Bot size={34} strokeWidth={2.2} />
             </div>
             <h3 className="thamili-hero-title">Choose Agent</h3>
             <p className="thamili-hero-subtitle">Select ready templates</p>
-            <button
-              className="thamili-hero-pill-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                setCurrentView('choose-agent');
-              }}
-            >
-              <span>Choose</span>
-              <span className="btn-arrow">→</span>
-            </button>
           </div>
         </div>
 

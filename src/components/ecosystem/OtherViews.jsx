@@ -5,7 +5,6 @@ import {
   Image,
   Video,
   GraduationCap,
-  Sparkles,
   Send,
   Play,
   Bot,
@@ -18,6 +17,7 @@ import {
   ArrowRight,
   Sliders
 } from 'lucide-react';
+import { AgentAvatar } from '../agent/AgentAvatar';
 
 export function AIChatView() {
   const { setCurrentView } = useAgent();
@@ -57,7 +57,7 @@ export function AIChatView() {
             <span className="eco-badge-tag">Conversational AI</span>
             <span className="text-xs text-gray-500 font-semibold">Active Model: {model}</span>
           </div>
-          <h2 className="eco-title">💬 Multi-Model AI Chat</h2>
+          <h2 className="eco-title">Multi-Model AI Chat</h2>
           <p className="eco-sub">
             Chat with world-class AI models (GPT-4o, Claude 3.5 Sonnet, Gemini 1.5 Pro, and DeepSeek) in one unified interface.
           </p>
@@ -138,7 +138,7 @@ export function AIImageView() {
           <div className="flex items-center gap-2 mb-1">
             <span className="eco-badge-tag">Generative Imagery</span>
           </div>
-          <h2 className="eco-title">🖼️ AI Image Creation Studio</h2>
+          <h2 className="eco-title">AI Image Creation Studio</h2>
           <p className="eco-sub">
             Generate ultra-realistic visual artwork, icons, marketing graphics, and 3D renders with Imagen 3 & DALL-E 3.
           </p>
@@ -188,7 +188,7 @@ export function AIImageView() {
           </div>
 
           <button type="submit" disabled={!prompt.trim() || isGenerating} className="btn-create-agent-submit">
-            <Sparkles size={16} />
+            <Image size={16} />
             <span>{isGenerating ? 'Rendering Neural Pixels...' : 'Generate High-Res Artwork'}</span>
           </button>
         </form>
@@ -211,7 +211,7 @@ export function AIImageView() {
             </div>
           ) : (
             <div className="image-placeholder-box">
-              <Sparkles size={48} className="text-purple-400 mb-2" />
+              <Image size={48} className="text-purple-400 mb-2" />
               <h4 className="text-base font-bold text-gray-800 dark:text-gray-200">Ready to Generate</h4>
               <p className="text-xs text-gray-500 max-w-xs text-center">
                 Configure your prompt and style on the left, then click Generate to create visual assets.
@@ -247,7 +247,7 @@ export function AIVideoView() {
           <div className="flex items-center gap-2 mb-1">
             <span className="eco-badge-tag">Video Generation</span>
           </div>
-          <h2 className="eco-title">🎥 AI Video Creation Studio (Flow & Veo)</h2>
+          <h2 className="eco-title">AI Video Creation Studio (Flow & Veo)</h2>
           <p className="eco-sub">
             Generate cinematic video clips, motion animations, and scene transitions with Google Flow and Veo generative engines.
           </p>
@@ -331,7 +331,7 @@ export function AILearnView() {
   const subjects = [
     {
       id: 'medical',
-      icon: '🩺',
+      icon: 'medical',
       title: 'Biology & Clinical Medicine',
       desc: 'Master pharmacology, cardiology, anatomy & clinical diagnostics with interactive Socratic quizzes.',
       color: '#EC4899',
@@ -339,7 +339,7 @@ export function AILearnView() {
     },
     {
       id: 'software',
-      icon: '💻',
+      icon: 'code',
       title: 'Full-Stack Software Architecture',
       desc: 'Learn WebRTC low-latency audio pipelines, microservices, clean code, and algorithm design.',
       color: '#06B6D4',
@@ -347,7 +347,7 @@ export function AILearnView() {
     },
     {
       id: 'tamil',
-      icon: '🌐',
+      icon: 'study',
       title: 'Tamil (தமிழ்) & Multilingual NLP',
       desc: 'Explore NLP tokenization, bilingual reasoning models, and Tamil literature with phonetic pronunciation.',
       color: '#8B5CF6',
@@ -355,7 +355,7 @@ export function AILearnView() {
     },
     {
       id: 'physics',
-      icon: '🧬',
+      icon: 'research',
       title: 'Quantum Physics & Mathematics',
       desc: 'Derive differential calculus, quantum mechanics formulas, and thermodynamic cycles step-by-step.',
       color: '#F59E0B',
@@ -370,7 +370,7 @@ export function AILearnView() {
           <div className="flex items-center gap-2 mb-1">
             <span className="eco-badge-tag">Socratic Tutoring</span>
           </div>
-          <h2 className="eco-title">🎓 AI Socratic Learning Hub</h2>
+          <h2 className="eco-title">AI Socratic Learning Hub</h2>
           <p className="eco-sub">
             Personalized study companion with step-by-step guided tutoring, interactive practice questions, and concept breakdowns.
           </p>
@@ -386,7 +386,9 @@ export function AILearnView() {
         {subjects.map((sub) => (
           <div key={sub.id} className="learn-box" onClick={() => setActiveSubject(sub)}>
             <div className="learn-box-top">
-              <span className="text-3xl">{sub.icon}</span>
+              <div className="p-2 rounded-xl" style={{ backgroundColor: `${sub.color}15`, color: sub.color }}>
+                <AgentAvatar avatar={sub.icon} size={26} />
+              </div>
               <span className="learn-tag" style={{ color: sub.color, backgroundColor: `${sub.color}15` }}>
                 Interactive
               </span>

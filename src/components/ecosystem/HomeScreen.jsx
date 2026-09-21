@@ -10,7 +10,6 @@ import {
   Bot,
   Paperclip,
   ArrowRight,
-  Sparkles,
   Zap,
   Layers
 } from 'lucide-react';
@@ -126,7 +125,6 @@ export function HomeScreen() {
       {/* Footer info matching screenshot */}
       <footer className="home-powered-footer">
         <span>Powered by advanced AI technology</span>
-        <Sparkles size={14} className="text-purple-500" />
       </footer>
     </div>
   );

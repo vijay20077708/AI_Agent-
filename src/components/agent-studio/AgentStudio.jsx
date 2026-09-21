@@ -13,7 +13,6 @@ import {
   Database,
   Wrench,
   Radio,
-  Sparkles,
   ArrowRight,
   ArrowLeft,
   Save,
@@ -105,7 +104,6 @@ export function AgentStudio() {
             className="btn-studio-preset"
             onClick={() => setIsTemplateModalOpen(true)}
           >
-            <Sparkles size={15} />
             <span>Load Template</span>
           </button>
         </div>
