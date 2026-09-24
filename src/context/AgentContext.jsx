@@ -237,6 +237,16 @@ export function AgentProvider({ children }) {
   const [isListening, setIsListening] = useState(false);
   const [audioLevel, setAudioLevel] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+
+  const isSpeakingRef = useRef(false);
+  const isMutedRef = useRef(false);
+  const isPausedRef = useRef(false);
+  const lastSpeechTextRef = useRef('');
+  const lastVoiceIdRef = useRef('');
+  const lastCharIndexRef = useRef(0);
+  const speechTimeoutRef = useRef(null);
+  const currentUtteranceRef = useRef(null);
 
   // Theme Sync
   useEffect(() => {
@@ -386,57 +396,226 @@ export function AgentProvider({ children }) {
   };
 
   // Speech Synthesis: Natural Voice Talk-Back using chosen persona consistently
-  const speakText = (text, explicitVoiceId = null) => {
+  const speakText = useCallback((text, explicitVoiceId = null, isContinuation = false, forcedVolume = null) => {
     const currentMode = agentConfigRef.current.interactionMode;
-    if (!('speechSynthesis' in window) || isMuted || currentMode === 'text-only') return;
+    if (!('speechSynthesis' in window) || currentMode === 'text-only') {
+      setIsSpeaking(false);
+      isSpeakingRef.current = false;
+      setIsPaused(false);
+      isPausedRef.current = false;
+      setAudioLevel(0);
+      return;
+    }
 
     try {
-      window.speechSynthesis.cancel();
-      const cleanText = text
-        .replace(/[*#`_~]/g, '')
-        .replace(/\[.*?\]/g, '')
-        .replace(/\(.*?\)/g, '')
-        .slice(0, 320);
+      if (!isContinuation) {
+        window.speechSynthesis.cancel();
+      }
+
+      const cleanText = isContinuation
+        ? text
+        : text
+            .replace(/[*#`_~]/g, '')
+            .replace(/\[.*?\]/g, '')
+            .replace(/\(.*?\)/g, '')
+            .slice(0, 320);
+
+      if (!cleanText || !cleanText.trim()) return;
 
       const targetVoiceId = explicitVoiceId || agentConfigRef.current.voiceId || 'shimmer';
       const persona = VOICE_PERSONAS.find(v => v.id === targetVoiceId) || VOICE_PERSONAS[0];
+
+      if (!isContinuation) {
+        lastSpeechTextRef.current = cleanText;
+        lastVoiceIdRef.current = targetVoiceId;
+        lastCharIndexRef.current = 0;
+      }
+      isPausedRef.current = false;
+      setIsPaused(false);
 
       const utterance = new SpeechSynthesisUtterance(cleanText);
       utterance.rate = persona.speed || 1.0;
       utterance.pitch = persona.pitch || 1.0;
       utterance.lang = persona.lang || 'en-US';
 
+      // Crucial: Volume is 0 when muted (agent still speaks silently!), 1 when unmuted
+      const vol = forcedVolume !== null ? forcedVolume : (isMutedRef.current ? 0 : 1);
+      utterance.volume = vol;
+
       const selectedSystemVoice = pickSystemVoice(persona);
       if (selectedSystemVoice) {
         utterance.voice = selectedSystemVoice;
       }
 
+      utterance.onboundary = (e) => {
+        if (e.charIndex !== undefined) {
+          if (isContinuation) {
+            lastCharIndexRef.current = (lastCharIndexRef.current || 0) + e.charIndex;
+          } else {
+            lastCharIndexRef.current = e.charIndex;
+          }
+        }
+      };
+
       utterance.onstart = () => {
+        if (!isPausedRef.current) {
+          setIsSpeaking(true);
+          isSpeakingRef.current = true;
+          // Equalizer and mouth animations stay live (even if sound volume is 0)
+          setAudioLevel(0.85);
+        }
+      };
+
+      utterance.onpause = () => {
+        setIsSpeaking(false);
+        isSpeakingRef.current = false;
+        setIsPaused(true);
+        isPausedRef.current = true;
+        setAudioLevel(0);
+      };
+
+      utterance.onresume = () => {
         setIsSpeaking(true);
+        isSpeakingRef.current = true;
+        setIsPaused(false);
+        isPausedRef.current = false;
         setAudioLevel(0.85);
       };
 
       utterance.onend = () => {
-        setIsSpeaking(false);
-        setAudioLevel(0);
+        if (!isPausedRef.current) {
+          setIsSpeaking(false);
+          isSpeakingRef.current = false;
+          setIsPaused(false);
+          isPausedRef.current = false;
+          setAudioLevel(0);
+        }
       };
 
       utterance.onerror = () => {
-        setIsSpeaking(false);
-        setAudioLevel(0);
+        if (!isPausedRef.current) {
+          setIsSpeaking(false);
+          isSpeakingRef.current = false;
+          setIsPaused(false);
+          isPausedRef.current = false;
+          setAudioLevel(0);
+        }
       };
 
+      currentUtteranceRef.current = utterance;
       window.speechSynthesis.speak(utterance);
     } catch (e) {
       console.warn('Speech synthesis error:', e);
       setIsSpeaking(false);
+      isSpeakingRef.current = false;
+      setIsPaused(false);
+      isPausedRef.current = false;
       setAudioLevel(0);
     }
-  };
+  }, [systemVoices]);
 
-  const replayVoice = (text, customVoiceId = null) => {
+  // Helper to mute / unmute audio:
+  // When muted: agent DOES NOT PAUSE! Agent keeps speaking (isSpeaking remains true, mouth/waves move), but volume is 0!
+  // When unmuted: sound is immediately restored (volume=1)
+  const updateMute = useCallback((val) => {
+    setIsMuted(prev => {
+      const next = typeof val === 'function' ? val(prev) : Boolean(val);
+      isMutedRef.current = next;
+
+      // If agent is currently speaking (and not paused):
+      // Seamlessly switch synthesis volume between 0 and 1 without stopping or pausing the agent
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        if (isSpeakingRef.current && !isPausedRef.current && lastSpeechTextRef.current) {
+          const charIdx = lastCharIndexRef.current || 0;
+          const remaining = lastSpeechTextRef.current.slice(charIdx).trim();
+
+          try {
+            window.speechSynthesis.cancel();
+          } catch (e) {}
+
+          if (remaining) {
+            speakText(remaining, lastVoiceIdRef.current, true, next ? 0 : 1);
+          } else {
+            setIsSpeaking(false);
+            isSpeakingRef.current = false;
+            setAudioLevel(0);
+          }
+        }
+      }
+
+      return next;
+    });
+  }, [speakText]);
+
+  const toggleMute = useCallback(() => {
+    updateMute(prev => !prev);
+  }, [updateMute]);
+
+  // Pause Voice Playback: freezes speaking at the exact word
+  const pauseSpeech = useCallback(() => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    if (isSpeakingRef.current && !isPausedRef.current) {
+      try {
+        window.speechSynthesis.pause();
+      } catch (e) {
+        console.warn('Speech pause error:', e);
+      }
+      isPausedRef.current = true;
+      setIsPaused(true);
+      setIsSpeaking(false);
+      isSpeakingRef.current = false;
+      setAudioLevel(0);
+    }
+  }, []);
+
+  // Resume Voice Playback from where it was paused
+  const resumeSpeech = useCallback(() => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+
+    if (isPausedRef.current) {
+      isPausedRef.current = false;
+      setIsPaused(false);
+      setIsSpeaking(true);
+      isSpeakingRef.current = true;
+      setAudioLevel(0.85);
+
+      try {
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
+      } catch (e) {
+        console.warn('Speech native resume error:', e);
+      }
+
+      // Chromium watchdog fallback
+      setTimeout(() => {
+        if (!window.speechSynthesis.speaking && isPausedRef.current === false && lastSpeechTextRef.current) {
+          const charIdx = lastCharIndexRef.current || 0;
+          const remaining = lastSpeechTextRef.current.slice(charIdx).trim();
+          if (remaining) {
+            speakText(remaining, lastVoiceIdRef.current, true);
+          } else {
+            setIsSpeaking(false);
+            isSpeakingRef.current = false;
+            setAudioLevel(0);
+          }
+        }
+      }, 150);
+    }
+  }, [speakText]);
+
+  // Toggle Pause/Resume
+  const togglePauseResume = useCallback(() => {
+    if (isPausedRef.current || isPaused) {
+      resumeSpeech();
+    } else if (isSpeakingRef.current || isSpeaking) {
+      pauseSpeech();
+    }
+  }, [isPaused, isSpeaking, pauseSpeech, resumeSpeech]);
+
+  const replayVoice = useCallback((text, customVoiceId = null) => {
     speakText(text, customVoiceId || agentConfigRef.current.voiceId);
-  };
+  }, [speakText]);
 
   // Send message in preview chat & reply with text and/or voice based on mode
   const sendMessage = async (userText) => {
@@ -665,7 +844,8 @@ export function AgentProvider({ children }) {
 
     setIsSidePreviewOpen(true);
     if (finalConfig.interactionMode !== 'text-only') {
-      setTimeout(() => {
+      if (speechTimeoutRef.current) clearTimeout(speechTimeoutRef.current);
+      speechTimeoutRef.current = setTimeout(() => {
         speakText(spokenIntro, finalConfig.voiceId);
       }, 400);
     }
@@ -723,7 +903,8 @@ export function AgentProvider({ children }) {
 
     setIsSidePreviewOpen(true);
     if (chosenMode !== 'text-only') {
-      setTimeout(() => {
+      if (speechTimeoutRef.current) clearTimeout(speechTimeoutRef.current);
+      speechTimeoutRef.current = setTimeout(() => {
         speakText(spokenIntro, config.voiceId);
       }, 400);
     }
@@ -752,7 +933,8 @@ export function AgentProvider({ children }) {
 
     setIsSidePreviewOpen(true);
     if (historyAgent.interactionMode !== 'text-only') {
-      setTimeout(() => {
+      if (speechTimeoutRef.current) clearTimeout(speechTimeoutRef.current);
+      speechTimeoutRef.current = setTimeout(() => {
         speakText(spokenIntro, historyAgent.voiceId);
       }, 400);
     }
@@ -790,16 +972,25 @@ export function AgentProvider({ children }) {
     ]);
 
     setIsSidePreviewOpen(true);
-    setTimeout(() => {
+    if (speechTimeoutRef.current) clearTimeout(speechTimeoutRef.current);
+    speechTimeoutRef.current = setTimeout(() => {
       speakText(DEFAULT_ROBOT_SPOKEN_INTRO, 'shimmer');
     }, 450);
   };
 
   const closeSidePreview = () => {
+    if (speechTimeoutRef.current) {
+      clearTimeout(speechTimeoutRef.current);
+      speechTimeoutRef.current = null;
+    }
     if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
+      try {
+        window.speechSynthesis.cancel();
+      } catch (e) {}
     }
     setIsSpeaking(false);
+    setIsPaused(false);
+    isPausedRef.current = false;
     setIsListening(false);
     setIsSidePreviewOpen(false);
   };
@@ -833,7 +1024,13 @@ export function AgentProvider({ children }) {
         audioLevel,
         setAudioLevel,
         isMuted,
-        setIsMuted,
+        setIsMuted: updateMute,
+        toggleMute,
+        isPaused,
+        setIsPaused,
+        pauseSpeech,
+        resumeSpeech,
+        togglePauseResume,
         speakText,
         replayVoice,
         sendMessage,

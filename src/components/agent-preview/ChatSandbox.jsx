@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAgent } from '../../context/AgentContext';
 import { DOMAINS } from '../../data/domains';
+import { AgentAvatar } from '../agent/AgentAvatar';
 import {
   Send,
   Loader2,
@@ -51,7 +52,7 @@ export function ChatSandbox() {
             className="sandbox-avatar-mini"
             style={{ background: agentConfig.avatarBg }}
           >
-            <span>{agentConfig.avatar}</span>
+            <AgentAvatar avatar={agentConfig.avatar} domain={agentConfig.domain} size={20} />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -91,7 +92,7 @@ export function ChatSandbox() {
                     className="msg-avatar-icon agent-avatar"
                     style={{ background: agentConfig.avatarBg }}
                   >
-                    <span>{agentConfig.avatar}</span>
+                    <AgentAvatar avatar={agentConfig.avatar} domain={agentConfig.domain} size={16} />
                   </div>
                 ) : (
                   <div className="msg-avatar-icon user-avatar">
@@ -151,7 +152,7 @@ export function ChatSandbox() {
                 className="msg-avatar-icon agent-avatar pulse-anim"
                 style={{ background: agentConfig.avatarBg }}
               >
-                <span>{agentConfig.avatar}</span>
+                <AgentAvatar avatar={agentConfig.avatar} domain={agentConfig.domain} size={16} />
               </div>
             </div>
             <div className="msg-bubble-content">

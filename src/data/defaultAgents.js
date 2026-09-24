@@ -48,6 +48,7 @@ export const DEFAULT_AGENTS = [
     memorySaving: true,
     tools: {
       webSearch: true,
+      weather: true,
       codeInterpreter: true,
       imageGen: true,
       knowledgeSearch: true

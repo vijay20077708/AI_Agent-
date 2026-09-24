@@ -1,7 +1,14 @@
 import { config } from '../config/env.js';
 import { cache } from './cacheService.js';
 
-export async function generateFastAIResponse({ message, agentConfig, weatherData = null, history = [] }) {
+export async function generateFastAIResponse({
+  message,
+  agentConfig,
+  weatherData = null,
+  isTravelOrWeatherAgent = false,
+  isWeatherQuery = false,
+  history = []
+}) {
   const cacheKey = `chat_${agentConfig?.name || 'agent'}_${message.trim().toLowerCase()}`;
   const cachedReply = cache.get(cacheKey);
   if (cachedReply) {
@@ -19,13 +26,15 @@ export async function generateFastAIResponse({ message, agentConfig, weatherData
   const systemInstruction = agentConfig?.systemPrompt || '';
 
   let weatherContext = '';
-  if (weatherData) {
+  if (weatherData && isTravelOrWeatherAgent) {
     weatherContext = `\n[LIVE REAL-TIME WEATHER INFORMATION for ${weatherData.city}]:
 - Current Condition: ${weatherData.current.condition}
 - Temperature: ${weatherData.current.temperature}${weatherData.current.temperatureUnit}
 - Humidity: ${weatherData.current.humidity}${weatherData.current.humidityUnit}
 - Wind Speed: ${weatherData.current.windSpeed} ${weatherData.current.windSpeedUnit}
-Use this live weather data accurately to answer the user in English.`;
+Use this live weather data accurately to answer the user's travel / climate question in English.`;
+  } else if (isWeatherQuery && !isTravelOrWeatherAgent) {
+    weatherContext = `\nNOTE ON WEATHER: You do NOT have live weather tracking tools enabled. If the user asks about current weather, temperature, or forecasts, politely clarify that as ${agentRole} specializing in ${agentDomain}, you do not monitor weather, and suggest consulting VoyageAI Global Travel Planner for live weather updates.`;
   }
 
   const systemPrompt = `You are "${agentName}", an expert AI assistant with the role of "${agentRole}".
@@ -110,23 +119,43 @@ STRICT LANGUAGE REQUIREMENT:
   }
 
   // 100% English domain fallback for high speed and quota safety
-  const fallbackReply = generateDomainFallback({ message, agentName, agentRole, agentDomain, weatherData });
+  const fallbackReply = generateDomainFallback({
+    message,
+    agentName,
+    agentRole,
+    agentDomain,
+    weatherData,
+    isTravelOrWeatherAgent,
+    isWeatherQuery
+  });
   return {
     success: true,
     reply: fallbackReply,
     model: 'fast-local-engine',
     latencyMs: Date.now() - startTime,
-    toolBadge: weatherData ? 'Live Weather API' : 'High-Speed Local Engine',
+    toolBadge: (weatherData && isTravelOrWeatherAgent) ? 'Live Weather API' : 'High-Speed Local Engine',
     note: lastError ? `API Notice: ${lastError}` : undefined
   };
 }
 
-function generateDomainFallback({ message, agentName, agentRole, agentDomain, weatherData }) {
+function generateDomainFallback({
+  message,
+  agentName,
+  agentRole,
+  agentDomain,
+  weatherData,
+  isTravelOrWeatherAgent,
+  isWeatherQuery
+}) {
   const lower = message.toLowerCase();
 
-  // 1. Weather Queries (English Only)
-  if (weatherData) {
-    return `The current weather in ${weatherData.city} is ${weatherData.current.condition}.\n\n• Temperature: ${weatherData.current.temperature}${weatherData.current.temperatureUnit}\n• Humidity: ${weatherData.current.humidity}${weatherData.current.humidityUnit}\n• Wind Speed: ${weatherData.current.windSpeed} ${weatherData.current.windSpeedUnit}\n\nOverall, the conditions are pleasant and favorable for outdoor activities!`;
+  // 1. Weather Queries
+  if (isWeatherQuery) {
+    if (weatherData && isTravelOrWeatherAgent) {
+      return `The current weather in ${weatherData.city} is ${weatherData.current.condition}.\n\n• Temperature: ${weatherData.current.temperature}${weatherData.current.temperatureUnit}\n• Humidity: ${weatherData.current.humidity}${weatherData.current.humidityUnit}\n• Wind Speed: ${weatherData.current.windSpeed} ${weatherData.current.windSpeedUnit}\n\nOverall, the conditions are pleasant and favorable for outdoor activities and travel!`;
+    } else {
+      return `I am ${agentName}, your ${agentRole} specializing in ${agentDomain}. I do not have access to live meteorological telemetry or real-time weather forecasting tools. For live destination weather and climate updates, please consult VoyageAI Global Travel Planner!`;
+    }
   }
 
   // 2. Hotel & Hospitality Domain

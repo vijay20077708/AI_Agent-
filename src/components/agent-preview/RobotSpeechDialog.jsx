@@ -11,6 +11,8 @@ export function RobotSpeechDialog({
   latestAgentMsg,
   isThinking,
   isSpeaking,
+  isPaused,
+  isMuted,
   isTextOnly,
   onReplayVoice,
   isCurrentlySpeakingThis
@@ -41,9 +43,15 @@ export function RobotSpeechDialog({
             <span className="robot-dialog-speaker-name">{agentName}</span>
           </div>
           {isSpeaking && (
-            <span className="robot-speaking-live-chip">
-              <span className="live-pulse-dot" />
-              <span>Speaking Aloud</span>
+            <span className={`robot-speaking-live-chip ${isMuted ? 'muted' : ''}`} style={isMuted ? { background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', borderColor: 'rgba(239, 68, 68, 0.25)' } : {}}>
+              <span className="live-pulse-dot" style={isMuted ? { background: '#EF4444' } : {}} />
+              <span>{isMuted ? 'Speaking (Muted)' : 'Speaking Aloud'}</span>
+            </span>
+          )}
+          {isPaused && (
+            <span className="robot-speaking-live-chip paused" style={{ background: 'rgba(245, 158, 11, 0.12)', color: '#D97706', borderColor: 'rgba(245, 158, 11, 0.3)' }}>
+              <span className="live-pulse-dot" style={{ background: '#F59E0B' }} />
+              <span>Voice Paused</span>
             </span>
           )}
         </div>
@@ -58,7 +66,7 @@ export function RobotSpeechDialog({
               title="Listen to Robot Voice"
             >
               <Volume2 size={13} />
-              <span>{isCurrentlySpeakingThis ? 'Speaking...' : 'Listen'}</span>
+              <span>{isCurrentlySpeakingThis ? (isPaused ? 'Paused' : 'Speaking...') : 'Listen'}</span>
             </button>
           )}
 

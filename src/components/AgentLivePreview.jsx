@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAgent } from '../context/AgentContext';
 import { DOMAINS } from '../data/domains';
+import { AgentAvatar } from './agent/AgentAvatar';
 import {
   Mic,
   MicOff,
@@ -128,8 +129,8 @@ export function AgentLivePreview() {
         </button>
 
         <div className="preview-agent-id">
-          <div className="agent-avatar-emerald">
-            <span>{agentConfig.avatar}</span>
+          <div className="agent-avatar-emerald" style={{ background: agentConfig.avatarBg }}>
+            <AgentAvatar avatar={agentConfig.avatar} domain={agentConfig.domain} size={24} />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -255,8 +256,15 @@ export function AgentLivePreview() {
 
               return (
                 <div key={msg.id} className={`chat-message-row ${isAgent ? 'agent' : 'user'}`}>
-                  <div className="msg-avatar-badge">
-                    {isAgent ? <span>{agentConfig.avatar}</span> : <User size={14} />}
+                  <div
+                    className="msg-avatar-badge"
+                    style={isAgent ? { background: agentConfig.avatarBg, color: '#fff' } : {}}
+                  >
+                    {isAgent ? (
+                      <AgentAvatar avatar={agentConfig.avatar} domain={agentConfig.domain} size={15} />
+                    ) : (
+                      <User size={14} />
+                    )}
                   </div>
 
                   <div className="msg-content-wrapper">
@@ -284,8 +292,11 @@ export function AgentLivePreview() {
 
             {isThinking && (
               <div className="chat-message-row agent">
-                <div className="msg-avatar-badge">
-                  <span>{agentConfig.avatar}</span>
+                <div
+                  className="msg-avatar-badge"
+                  style={{ background: agentConfig.avatarBg, color: '#fff' }}
+                >
+                  <AgentAvatar avatar={agentConfig.avatar} domain={agentConfig.domain} size={15} />
                 </div>
                 <div className="msg-content-wrapper">
                   <div className="msg-thinking-row">

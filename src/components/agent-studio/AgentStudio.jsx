@@ -7,6 +7,7 @@ import { ToolsConfig } from './ToolsConfig';
 import { VoiceSettings } from './VoiceSettings';
 import { ExportModal } from './ExportModal';
 import { TemplateModal } from './TemplateModal';
+import { AgentAvatar } from '../agent/AgentAvatar';
 import {
   UserCheck,
   FileCode2,
@@ -86,7 +87,7 @@ export function AgentStudio() {
             className="agent-current-badge-avatar"
             style={{ background: agentConfig.avatarBg }}
           >
-            <span>{agentConfig.avatar}</span>
+            <AgentAvatar avatar={agentConfig.avatar} domain={agentConfig.domain} size={24} />
           </div>
           <div>
             <div className="flex items-center gap-2">

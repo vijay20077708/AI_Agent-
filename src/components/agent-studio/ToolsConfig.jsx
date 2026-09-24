@@ -10,10 +10,20 @@ import {
   Layers,
   Check,
   AlertCircle,
-  ExternalLink
+  ExternalLink,
+  CloudSun
 } from 'lucide-react';
 
 const AVAILABLE_TOOLS = [
+  {
+    id: 'weather',
+    name: 'Live Weather & Forecast API (Open-Meteo)',
+    icon: CloudSun,
+    color: '#0284C7',
+    badge: 'Live Meteorological Data',
+    desc: 'Real-time temperature, precipitation probability, humidity, and condition forecasts for destinations worldwide.',
+    recommendedFor: ['travel', 'hotel']
+  },
   {
     id: 'livekit_voice',
     name: 'LiveKit Realtime Voice & Audio',

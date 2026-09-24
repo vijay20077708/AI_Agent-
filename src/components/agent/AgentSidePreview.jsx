@@ -10,6 +10,8 @@ import {
   MicOff,
   Volume2,
   VolumeX,
+  Play,
+  Pause,
   Send,
   Loader2,
   User,
@@ -37,6 +39,11 @@ export function AgentSidePreview() {
     audioLevel,
     isMuted,
     setIsMuted,
+    toggleMute,
+    isPaused,
+    pauseSpeech,
+    resumeSpeech,
+    togglePauseResume,
     replayVoice
   } = useAgent();
 
@@ -188,16 +195,36 @@ export function AgentSidePreview() {
 
           <div className="flex items-center gap-2">
             {!isTextOnly && (
-              <button
-                onClick={() => setIsMuted(!isMuted)}
-                className={`side-mute-btn ${isMuted ? 'muted' : ''}`}
-                title={isMuted ? 'Unmute Voice Output' : 'Mute Voice Output'}
-              >
-                {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={toggleMute}
+                  className={`side-mute-btn ${isMuted ? 'muted' : ''}`}
+                  title={isMuted ? 'Unmute Voice Output (Sound is Muted)' : 'Mute Voice Output (Sound is Active)'}
+                >
+                  {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={togglePauseResume}
+                  disabled={!isSpeaking && !isPaused}
+                  className={`side-pause-resume-btn ${isPaused ? 'paused' : isSpeaking ? 'speaking' : ''} ${(!isSpeaking && !isPaused) ? 'disabled' : ''}`}
+                  title={
+                    isPaused
+                      ? 'Resume Agent Voice'
+                      : isSpeaking
+                      ? 'Pause Agent Voice'
+                      : 'Pause / Resume (Agent is idle)'
+                  }
+                >
+                  {isPaused ? <Play size={16} /> : <Pause size={16} />}
+                </button>
+              </>
             )}
 
             <button
+              type="button"
               onClick={closeSidePreview}
               className="side-close-btn"
               title="Close Preview Window"
@@ -213,10 +240,12 @@ export function AgentSidePreview() {
           <div className="robot-interactive-stage">
             {/* Robot Status Aura Pill */}
             <div className="robot-status-pill">
-              <span className={`robot-live-dot ${isSpeaking ? 'speaking' : isListening ? 'listening' : isThinking ? 'thinking' : 'ready'}`} />
+              <span className={`robot-live-dot ${isPaused ? 'paused' : isSpeaking ? 'speaking' : isListening ? 'listening' : isThinking ? 'thinking' : 'ready'}`} />
               <span className="robot-status-text">
-                {isSpeaking
-                  ? `${agentConfig.name} is speaking...`
+                {isPaused
+                  ? `${agentConfig.name} is paused • Tap Resume`
+                  : isSpeaking
+                  ? (isMuted ? `${agentConfig.name} is speaking (Muted)...` : `${agentConfig.name} is speaking...`)
                   : isListening
                   ? 'Listening to you... Speak now'
                   : isThinking
@@ -272,6 +301,8 @@ export function AgentSidePreview() {
                 latestAgentMsg={latestAgentMsg}
                 isThinking={isThinking}
                 isSpeaking={isSpeaking}
+                isPaused={isPaused}
+                isMuted={isMuted}
                 isTextOnly={isTextOnly}
                 onReplayVoice={handleReplay}
                 isCurrentlySpeakingThis={isCurrentlySpeakingLatest}
@@ -283,9 +314,9 @@ export function AgentSidePreview() {
                   {[...Array(16)].map((_, i) => (
                     <div
                       key={i}
-                      className={`robot-wave-bar ${isSpeaking || isListening ? 'active' : ''}`}
+                      className={`robot-wave-bar ${(isSpeaking || isListening) && !isPaused ? 'active' : ''}`}
                       style={{
-                        height: (isSpeaking || isListening) ? `${10 + Math.random() * 26}px` : '4px',
+                        height: ((isSpeaking || isListening) && !isPaused) ? `${10 + Math.random() * 26}px` : '4px',
                         animationDelay: `${i * 0.06}s`
                       }}
                     />
@@ -332,8 +363,19 @@ export function AgentSidePreview() {
                   <div key={msg.id} className={`side-msg-row ${isAgent ? 'agent-robot-bubble' : 'user'}`}>
                     <div className="side-msg-avatar">
                       {isAgent ? (
-                        <div className="robot-mini-avatar-thumb">
-                          <img src={robotAvatarImg} alt="Robot" className="thumb-robot-icon" />
+                        <div
+                          className="robot-mini-avatar-thumb"
+                          style={{
+                            background: agentConfig.avatarBg || '#6366F1',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#fff',
+                            borderRadius: '8px',
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
+                          }}
+                        >
+                          <AgentAvatar avatar={agentConfig.avatar} domain={agentConfig.domain} size={14} />
                         </div>
                       ) : (
                         <User size={13} />
@@ -452,7 +494,7 @@ export function AgentSidePreview() {
 
                   <button
                     type="button"
-                    onClick={() => setIsMuted(!isMuted)}
+                    onClick={toggleMute}
                     className={`btn-voice-mute-toggle ${isMuted ? 'muted' : ''}`}
                     title={isMuted ? 'Unmute Audio' : 'Mute Audio'}
                   >

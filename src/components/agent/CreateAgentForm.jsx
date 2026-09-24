@@ -37,7 +37,8 @@ import {
   X,
   Copy,
   ShieldCheck,
-  RefreshCw
+  RefreshCw,
+  AlertCircle
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -88,10 +89,29 @@ export function CreateAgentForm() {
   const [customApiKey, setCustomApiKey] = useState('');
   const [copiedApiKey, setCopiedApiKey] = useState(false);
 
+  const warningTimeoutRef = useRef(null);
+
+  const showWarning = (msg, duration = 4000) => {
+    if (warningTimeoutRef.current) {
+      clearTimeout(warningTimeoutRef.current);
+    }
+    setStepWarning(msg);
+    warningTimeoutRef.current = setTimeout(() => {
+      setStepWarning(null);
+    }, duration);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (warningTimeoutRef.current) {
+        clearTimeout(warningTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const handleOpenApiKeyModal = () => {
     if (!isAgentUnlocked) {
-      setStepWarning('🔒 Please click Launch first! Generate API Key unlocks once the agent is launched and previewed.');
-      setTimeout(() => setStepWarning(null), 4000);
+      showWarning('🔒 Please click Launch first! Generate API Key unlocks once the agent is launched and previewed.', 4000);
       return;
     }
     const agentSlug = (agentConfig.name || 'custom_agent').toLowerCase().replace(/[^a-z0-9]+/g, '_');
@@ -194,55 +214,54 @@ export function CreateAgentForm() {
 
     if (targetStep === 1) {
       setActiveStep(1);
+      if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
       setStepWarning(null);
     } else if (targetStep === 2) {
       if (!isStep2Unlocked) {
-        setStepWarning('🔒 Please complete Step 1 (Agent Name & Role) first to unlock Step 2.');
-        setTimeout(() => setStepWarning(null), 3500);
+        showWarning('🔒 Please complete Step 1 (Agent Name & Role) first to unlock Step 2.', 3500);
         return;
       }
       setActiveStep(2);
+      if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
       setStepWarning(null);
     } else if (targetStep === 3) {
       if (!isStep2Unlocked) {
-        setStepWarning('🔒 Please complete Step 1 first to unlock subsequent steps.');
-        setTimeout(() => setStepWarning(null), 3500);
+        showWarning('🔒 Please complete Step 1 first to unlock subsequent steps.', 3500);
         return;
       }
       if (!isStep3Unlocked) {
-        setStepWarning('🔒 Please complete Step 2 (Voice & Interaction) first to unlock Step 3.');
-        setTimeout(() => setStepWarning(null), 3500);
+        showWarning('🔒 Please complete Step 2 (Voice & Interaction) first to unlock Step 3.', 3500);
         return;
       }
       setActiveStep(3);
+      if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
       setStepWarning(null);
     }
   };
 
   const handleCompleteStep1 = () => {
     if (!agentConfig.name || !agentConfig.name.trim()) {
-      setStepWarning('⚠️ Please enter an Agent Name in Step 1.');
-      setTimeout(() => setStepWarning(null), 3500);
+      showWarning('⚠️ Please enter an Agent Name in Step 1.', 3500);
       return;
     }
     if (!agentConfig.role || !agentConfig.role.trim()) {
-      setStepWarning('⚠️ Please enter an Agent Role / Purpose in Step 1.');
-      setTimeout(() => setStepWarning(null), 3500);
+      showWarning('⚠️ Please enter an Agent Role / Purpose in Step 1.', 3500);
       return;
     }
     setCompletedSteps((prev) => ({ ...prev, 1: true }));
     setActiveStep(2);
+    if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
     setStepWarning(null);
   };
 
   const handleCompleteStep2 = () => {
     if (!agentConfig.interactionMode || !agentConfig.voiceId) {
-      setStepWarning('⚠️ Please choose an Interaction Mode and Voice Persona.');
-      setTimeout(() => setStepWarning(null), 3500);
+      showWarning('⚠️ Please choose an Interaction Mode and Voice Persona.', 3500);
       return;
     }
     setCompletedSteps((prev) => ({ ...prev, 2: true }));
     setActiveStep(3);
+    if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
     setStepWarning(null);
   };
 
@@ -250,12 +269,12 @@ export function CreateAgentForm() {
     if (e) e.preventDefault();
     if (!agentConfig.name || !agentConfig.name.trim()) {
       setActiveStep(1);
-      setStepWarning('Please enter an Agent Name in Step 1.');
+      showWarning('⚠️ Please enter an Agent Name in Step 1.', 3500);
       return;
     }
     if (!agentConfig.role || !agentConfig.role.trim()) {
       setActiveStep(1);
-      setStepWarning('Please enter an Agent Role / Purpose in Step 1.');
+      showWarning('⚠️ Please enter an Agent Role / Purpose in Step 1.', 3500);
       return;
     }
     setCompletedSteps({ 1: true, 2: true, 3: true });
@@ -390,13 +409,6 @@ export function CreateAgentForm() {
               </div>
             </button>
           </div>
-
-          {/* Locked Step Warning Toast */}
-          {stepWarning && (
-            <div className="studio-step-warning-toast animate-fadeIn">
-              <span>{stepWarning}</span>
-            </div>
-          )}
         </div>
 
         {/* 2-Column Responsive Studio Layout */}
@@ -965,7 +977,7 @@ export function CreateAgentForm() {
 
               {/* Agent Identity Showcase */}
               <div className="preview-identity-hero">
-                <div className="preview-avatar-circle">
+                <div className="preview-avatar-circle" style={{ background: agentConfig.avatarBg }}>
                   <AgentAvatar avatar={agentConfig.avatar} domain={agentConfig.domain} size={26} />
                 </div>
                 <h3 className="preview-agent-name">
@@ -1105,8 +1117,8 @@ export function CreateAgentForm() {
             <div className="api-key-modal-body">
               {/* Agent Card Summary */}
               <div className="api-key-agent-summary">
-                <div className="api-key-agent-avatar-box">
-                  <AgentAvatar avatar={agentConfig.avatar} domain={agentConfig.domain} size={22} />
+                <div className="api-key-agent-avatar-box" style={{ background: agentConfig.avatarBg }}>
+                  <AgentAvatar avatar={agentConfig.avatar} domain={agentConfig.domain} size={24} />
                 </div>
                 <div className="api-key-agent-info">
                   <div className="api-key-agent-title-row">
@@ -1204,6 +1216,36 @@ export function CreateAgentForm() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Small Floating Bottom Toast Notification Popup */}
+      {stepWarning && (
+        <div className="studio-bottom-toast-popup" role="alert">
+          <div className={`studio-bottom-toast-icon-wrap ${stepWarning.includes('⚠️') ? 'alert' : 'lock'}`}>
+            {stepWarning.includes('⚠️') ? (
+              <AlertCircle size={16} className="studio-toast-icon-alert" />
+            ) : (
+              <Lock size={15} className="studio-toast-icon-lock" />
+            )}
+          </div>
+          <div className="studio-bottom-toast-content">
+            <span className="studio-bottom-toast-text">
+              {stepWarning.replace(/^[🔒⚠️]\s*/, '')}
+            </span>
+          </div>
+          <button
+            type="button"
+            className="studio-bottom-toast-close"
+            onClick={() => {
+              if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
+              setStepWarning(null);
+            }}
+            title="Dismiss notification"
+            aria-label="Close"
+          >
+            <X size={14} />
+          </button>
         </div>
       )}
     </div>

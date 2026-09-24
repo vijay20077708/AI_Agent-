@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAgent } from '../../context/AgentContext';
 import { AgentAvatar } from '../agent/AgentAvatar';
 import {
+  ArrowLeft,
   Bot,
   Trash2,
   Search,
@@ -111,11 +112,16 @@ export function HistoryView() {
     <div className="ecosystem-view-page">
       <div className="ecosystem-view-header">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="eco-badge-tag">
-              <Clock size={12} className="text-purple-600" />
-              Agent Launch Log
-            </span>
+          <div className="mb-2.5">
+            <button
+              type="button"
+              onClick={() => setCurrentView('agent-hub')}
+              className="btn-back-hub"
+              title="Back to Agent Main Page"
+            >
+              <ArrowLeft size={15} />
+              <span>Back to Main Page</span>
+            </button>
           </div>
           <h2 className="eco-title">My Agent History</h2>
           <p className="eco-sub">

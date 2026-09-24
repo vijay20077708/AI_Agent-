@@ -11,6 +11,13 @@ export async function handleChat(req, res) {
       return res.status(400).json({ success: false, error: 'A message string is required.' });
     }
 
+    const isTravelOrWeatherAgent =
+      agentConfig?.domain === 'travel' ||
+      agentConfig?.id === 'travel-agent' ||
+      Boolean(agentConfig?.tools?.weather) ||
+      Boolean(agentConfig?.tools?.live_weather) ||
+      Boolean(agentConfig?.tools?.weatherApi);
+
     const lower = message.toLowerCase();
     const isWeatherQuery =
       lower.includes('weather') ||
@@ -25,7 +32,8 @@ export async function handleChat(req, res) {
       lower.includes('forecast');
 
     let weatherData = null;
-    if (isWeatherQuery) {
+    // Strictly only fetch weather for travel or weather-enabled agents when user asks about weather
+    if (isTravelOrWeatherAgent && isWeatherQuery) {
       try {
         weatherData = await getWeatherData(config.defaultLatitude, config.defaultLongitude);
       } catch (err) {
@@ -37,6 +45,8 @@ export async function handleChat(req, res) {
       message,
       agentConfig,
       weatherData,
+      isTravelOrWeatherAgent,
+      isWeatherQuery,
       history
     });
 

@@ -238,11 +238,15 @@ export function ChooseAgentScreen() {
               >
                 {/* Main Horizontal Card Row */}
                 <div className="agent-card-main-row">
-                  {/* Left: Number + Avatar Badge */}
+                  {/* Left: Number + Dedicated Vibrant Agent Logo Badge */}
                   <div className="agent-card-index-avatar-wrap">
-                    <div className="agent-card-index-box">
-                      <span className="agent-card-index-num">{indexNumber}</span>
-                      <AgentAvatar avatar={agent.avatar} domain={agent.domain} size={20} />
+                    <span className="agent-card-index-num">{indexNumber}</span>
+                    <div
+                      className="agent-card-logo-badge"
+                      style={{ background: agent.avatarBg }}
+                      title={`${agent.name} Logo`}
+                    >
+                      <AgentAvatar avatar={agent.avatar} domain={agent.domain} size={24} strokeWidth={2.4} />
                     </div>
                   </div>
 
@@ -530,8 +534,11 @@ export function ChooseAgentScreen() {
             <div className="api-key-modal-body">
               {/* Agent Card Summary */}
               <div className="api-key-agent-summary">
-                <div className="api-key-agent-avatar-box">
-                  <AgentAvatar avatar={apiKeyModalAgent.avatar} domain={apiKeyModalAgent.domain} size={22} />
+                <div
+                  className="api-key-agent-avatar-box"
+                  style={{ background: apiKeyModalAgent.avatarBg }}
+                >
+                  <AgentAvatar avatar={apiKeyModalAgent.avatar} domain={apiKeyModalAgent.domain} size={24} strokeWidth={2.4} />
                 </div>
                 <div className="api-key-agent-info">
                   <div className="api-key-agent-title-row">
